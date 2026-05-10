@@ -34,7 +34,7 @@
     const { useState, useEffect, useMemo } = React;
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
@@ -137,21 +137,30 @@
       useEffect(() => {
         const initAuth = async () => {
           try { 
-            await signInAnonymously(auth); 
+            // 1. קודם נוודא שאנחנו לא חוזרים עכשיו מהתחברות של גוגל
+            await getRedirectResult(auth);
           } catch (e) { 
-            console.error("Auth init Error:", e);
-            if (e.code === 'auth/requests-from-referer-blocked' || e.message.includes('API key not valid')) {
-               setErrorMsg("התחברות נחסמה עקב הגבלות אבטחה (API Key Restriction). עליך לפתוח את האפליקציה דרך הכתובת המאושרת ב-GitHub Pages.");
-            } else {
-               setErrorMsg(`שגיאת התחברות: ${e.message}`);
-            }
+            console.error("Redirect Error:", e);
+            setErrorMsg(`שגיאה בחיבור מגוגל: ${e.message}`);
           }
         };
         initAuth();
 
-        return onAuthStateChanged(auth, (currentUser) => {
-          setUser(currentUser);
+        // 2. נאזין לסטטוס ההתחברות
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+          if (currentUser) {
+            setUser(currentUser);
+          } else {
+            // 3. רק אם אין משתמש בכלל, נתחבר כאורח
+            try {
+              await signInAnonymously(auth);
+            } catch (e) {
+              console.error("Anon Auth Error:", e);
+            }
+          }
         });
+        
+        return () => unsubscribe();
       }, []);
 
       useEffect(() => {
