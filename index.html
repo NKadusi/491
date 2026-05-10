@@ -73,7 +73,7 @@
     const HOTEL_COORDS = { lat: 47.5023, lng: 19.0531 };
 
     const PLACES = [
-      { id: 'hotel', name: 'מלון Mövenpick', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-500' },
+      { id: 'hotel', name: 'מלון Mövenpick Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-500' },
       { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'כאן קורה הקסם (מטרו M2)', icon: 'fa-solid fa-music', color: 'text-red-500' },
       { id: 'bls', name: 'מועדון Barba Negra (הופעת BLS)', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'Black Label Society ב-10 ביוני', icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4975, lng: 19.0550, desc: 'חולצות ומרצ\'נדייז', icon: 'fa-solid fa-bag-shopping', color: 'text-gray-300' },
@@ -86,13 +86,7 @@
       ]},
       { category: 'Ruin Bars (ברי הריסות)', icon: 'fa-solid fa-beer-mug-empty text-orange-400', items: [
         { name: 'Szimpla Kert', desc: 'הבר המפורסם והאייקוני ביותר. חובה ביקור.' },
-        { name: 'Instant-Fogas', desc: 'קומפלקס מטורף של מועדונים. מעולה למסיבות.' },
-        { name: 'Mazel Tov', desc: 'אווירה קולינרית ואוכל מזרח תיכוני (להזמין מקום).' }
-      ]},
-      { category: 'אטרקציות לימים החופשיים', icon: 'fa-solid fa-camera text-blue-400', items: [
-        { name: 'מרחצאות סצ\'ני (Széchenyi)', desc: 'המרחצאות התרמיים המפורסמים. מושלם להתאוששות.' },
-        { name: 'הפרלמנט ההונגרי', desc: 'המבנה הכי יפה בעיר על גדות הדנובה.' },
-        { name: 'מצודת הדייגים', desc: 'נוף מטורף של כל העיר, מושלם לתמונות שקיעה.' }
+        { name: 'Instant-Fogas', desc: 'קומפלקס מטורף של מועדונים. מעולה למסיבות.' }
       ]}
     ];
 
@@ -470,7 +464,7 @@
             {activeTab === 'map' && (
               <div className="space-y-4 animate-in fade-in duration-300">
                 <div className="bg-neutral-900 rounded-xl p-4 border border-neutral-800 shadow-sm text-sm text-neutral-400">
-                  מרחקים מחושבים בקו אווירי ממלון Mövenpick. לחצו על "נווט" לפתיחת Google Maps.
+                  מרחקים מחושבים בקו אווירי ממלון Mövenpick Budapest Centre. לחצו על "נווט" לפתיחת Google Maps.
                 </div>
                 {PLACES.map((p) => {
                   const distKm = calculateDistanceAir(HOTEL_COORDS.lat, HOTEL_COORDS.lng, p.lat, p.lng);
