@@ -40,7 +40,7 @@
     const { useState, useEffect, useMemo } = React;
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
@@ -198,13 +198,22 @@
 
       // Actions
       const handleGoogleLogin = async () => {
-        setErrorMsg('');
+        setErrorMsg('מתחבר לגוגל...');
         try {
           const provider = new GoogleAuthProvider();
-          // שינוי קריטי: מעביר לדף של גוגל במקום לפתוח חלון שנסגר
-          await signInWithRedirect(auth, provider);
+          await signInWithPopup(auth, provider);
+          setErrorMsg('');
         } catch (error) {
-          setErrorMsg("שגיאה בהתחברות. נסה להשתמש בדפדפן כרום רגיל.");
+          console.error("Login Error:", error);
+          if (error.code === 'auth/popup-closed-by-user') {
+             setErrorMsg("החלון נסגר לפני שההתחברות הושלמה.");
+          } else if (error.code === 'auth/unauthorized-domain') {
+             setErrorMsg("שגיאה: הדומיין הזה לא מאושר ב-Firebase. עליך להוסיף אותו בהגדרות.");
+          } else if (error.message.includes('file:')) {
+             setErrorMsg("שגיאה: אי אפשר להתחבר מקובץ מקומי במחשב. חובה להעלות את הקובץ לשרת או ל-GitHub Pages.");
+          } else {
+             setErrorMsg(`שגיאה: ${error.message} (${error.code})`);
+          }
         }
       };
 
