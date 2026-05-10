@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chapter 491 Goes to Budapest</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel (to compile JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      -webkit-tap-highlight-color: transparent; 
+      background-color: #0a0a0a;
+      background-image: linear-gradient(rgba(10, 10, 10, 0.75), rgba(10, 10, 10, 0.95)), url('https://images.unsplash.com/photo-1540039155732-680f7498c5ee?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+    }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 80px); }
+    /* Hide scrollbar for tabs if needed */
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="text-neutral-200">
+  <div id="root"></div>
+
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useMemo } = React;
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
+      authDomain: "goes-to-budapest.firebaseapp.com",
+      projectId: "goes-to-budapest",
+      storageBucket: "goes-to-budapest.firebasestorage.app",
+      messagingSenderId: "488923007392",
+      appId: "1:488923007392:web:8b657382aab11109a2bcc5",
+      measurementId: "G-4QXV4Q37KH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const databaseAppId = 'metallica-budapest-app';
+
+    // --- Data Configurations ---
+    const STADIUM_ZONES = [
+      "גולדן רינג (Golden Circle)",
+      "דשא עמידה (General Admission)",
+      "יציע תחתון (100)",
+      "יציע אמצעי (200)",
+      "יציע עליון (300)",
+      "מתחם אוכל / ברים",
+      "מחוץ לאצטדיון (בדרך)"
+    ];
+
+    const HOTEL_COORDS = { lat: 47.5023, lng: 19.0531 };
+
+    const PLACES = [
+      { id: 'hotel', name: 'מלון Mövenpick', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-500' },
+      { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'כאן קורה הקסם (מטרו M2)', icon: 'fa-solid fa-music', color: 'text-red-500' },
+      { id: 'bls', name: 'מועדון Barba Negra (הופעת BLS)', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'Black Label Society ב-10 ביוני', icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
+      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4975, lng: 19.0550, desc: 'חולצות ומרצ\'נדייז', icon: 'fa-solid fa-bag-shopping', color: 'text-gray-300' },
+      { id: 'starbucks1', name: 'סטארבקס Deák Ferenc', type: 'coffee', lat: 47.4981, lng: 19.0543, desc: 'קפה קרוב למלון', icon: 'fa-solid fa-mug-hot', color: 'text-green-500' }
+    ];
+
+    const BARS_AND_ATTRACTIONS = [
+      { category: 'הופעות נוספות השבוע', icon: 'fa-solid fa-guitar text-orange-500', items: [
+        { name: 'Black Label Society', desc: 'חימום מטורף למטאליקה! זאק ויילד ולהקתו יופיעו במועדון Barba Negra ב-10 ביוני.', link: 'https://jegy.rock1.hu/black-label-society', linkText: 'הזמנת כרטיסים להופעה' }
+      ]},
+      { category: 'Ruin Bars (ברי הריסות)', icon: 'fa-solid fa-beer-mug-empty text-orange-400', items: [
+        { name: 'Szimpla Kert', desc: 'הבר המפורסם והאייקוני ביותר. חובה ביקור.' },
+        { name: 'Instant-Fogas', desc: 'קומפלקס מטורף של מועדונים. מעולה למסיבות.' },
+        { name: 'Mazel Tov', desc: 'אווירה קולינרית ואוכל מזרח תיכוני (להזמין מקום).' }
+      ]},
+      { category: 'אטרקציות לימים החופשיים', icon: 'fa-solid fa-camera text-blue-400', items: [
+        { name: 'מרחצאות סצ\'ני (Széchenyi)', desc: 'המרחצאות התרמיים המפורסמים. מושלם להתאוששות.' },
+        { name: 'הפרלמנט ההונגרי', desc: 'המבנה הכי יפה בעיר על גדות הדנובה.' },
+        { name: 'מצודת הדייגים', desc: 'נוף מטורף של כל העיר, מושלם לתמונות שקיעה.' }
+      ]}
+    ];
+
+    // --- Helpers ---
+    function calculateDistanceDetailed(lat1, lon1, lat2, lon2) {
+      if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+      const R = 6371; 
+      const dLat = (lat2 - lat1) * (Math.PI/180);
+      const dLon = (lon2 - lon1) * (Math.PI/180); 
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      const distKm = R * c; 
+      
+      if (distKm < 1) return `${Math.round(distKm * 1000)} מטרים ממך`;
+      return `${distKm.toFixed(1)} ק"מ ממך`;
+    }
+
+    function calculateDistanceAir(lat1, lon1, lat2, lon2) {
+      const R = 6371; 
+      const dLat = (lat2 - lat1) * (Math.PI/180);
+      const dLon = (lon2 - lon1) * (Math.PI/180); 
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      return R * c;
+    }
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return '';
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'עכשיו';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `לפני ${minutes} דק'`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `לפני ${hours} שעות`;
+      return 'מזמן';
+    }
+
+    // --- Main App Component ---
+    function App() {
+      // Navigation state
+      const [activeTab, setActiveTab] = useState('friends');
+      
+      // Firebase state
+      const [user, setUser] = useState(null);
+      const [checkins, setCheckins] = useState([]);
+      
+      // Radar Check-in form state
+      const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
+      const [statusMessage, setStatusMessage] = useState('');
+      const [useGps, setUseGps] = useState(true);
+      const [isSaving, setIsSaving] = useState(false);
+      const [showCheckInForm, setShowCheckInForm] = useState(false);
+      const [errorMsg, setErrorMsg] = useState('');
+      const [myLocation, setMyLocation] = useState(null);
+
+      // Search state
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Currency state
+      const [exchangeAmount, setExchangeAmount] = useState(100);
+      const [exchangeCurrency, setExchangeCurrency] = useState('ILS');
+      const RATES = { ILS: 96.5, EUR: 395.0 };
+      const calculatedHUF = useMemo(() => {
+        return (exchangeAmount * RATES[exchangeCurrency]).toLocaleString('en-US', { maximumFractionDigits: 0 });
+      }, [exchangeAmount, exchangeCurrency]);
+
+      // Initialization & Listeners
+      useEffect(() => {
+        const initAuth = async () => {
+          try { await signInAnonymously(auth); } catch (e) { console.error(e); }
+        };
+        initAuth();
+
+        return onAuthStateChanged(auth, (currentUser) => {
+          setUser(currentUser);
+        });
+      }, []);
+
+      useEffect(() => {
+        if (!user || !db) return;
+        const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
+        return onSnapshot(checkinsRef, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          data.sort((a, b) => b.timestamp - a.timestamp);
+          setCheckins(data);
+        });
+      }, [user]);
+
+      useEffect(() => {
+        if (useGps && navigator.geolocation) {
+          const watchId = navigator.geolocation.watchPosition(
+            (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            (err) => console.warn(err),
+            { enableHighAccuracy: true }
+          );
+          return () => navigator.geolocation.clearWatch(watchId);
+        }
+      }, [useGps]);
+
+      // Actions
+      const handleGoogleLogin = async () => {
+        setErrorMsg('');
+        try {
+          const provider = new GoogleAuthProvider();
+          await signInWithPopup(auth, provider);
+        } catch (error) {
+          setErrorMsg("שגיאה בהתחברות. נסה להשתמש בדפדפן כרום רגיל.");
+        }
+      };
+
+      const handleLogout = async () => {
+        await signOut(auth);
+        await signInAnonymously(auth);
+      };
+
+      const getCoordinates = () => {
+        return new Promise((resolve, reject) => {
+          if (!navigator.geolocation) reject(new Error("No GPS"));
+          else {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+              (err) => reject(err),
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+          }
+        });
+      };
+
+      const handleCheckIn = async () => {
+        if (!user || !db) return;
+        setIsSaving(true);
+        setErrorMsg('');
+        
+        let gpsCoords = null;
+        if (useGps) {
+          try {
+            gpsCoords = await getCoordinates();
+            setMyLocation(gpsCoords);
+          } catch (error) {
+            setErrorMsg("לא התקבל מיקום GPS, נשמר לפי יציע בלבד.");
+          }
+        }
+
+        try {
+          const docRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid);
+          await setDoc(docRef, {
+            name: user.isAnonymous ? "אורח אנונימי" : user.displayName,
+            photoURL: user.isAnonymous ? "" : user.photoURL,
+            zone: selectedZone,
+            message: statusMessage.trim(),
+            timestamp: Date.now(),
+            userId: user.uid,
+            location: gpsCoords || myLocation
+          });
+          setStatusMessage(''); 
+          setShowCheckInForm(false);
+        } catch (error) {
+          setErrorMsg("שגיאת הרשאות. ודא שהתחברת כראוי.");
+        } finally {
+          setIsSaving(false);
+        }
+      };
+
+      const checkinsByZone = useMemo(() => {
+        const grouped = {};
+        STADIUM_ZONES.forEach(z => grouped[z] = []);
+        checkins.forEach(c => {
+          if (grouped[c.zone]) grouped[c.zone].push(c);
+          else grouped[c.zone] = [c]; 
+        });
+        return grouped;
+      }, [checkins]);
+
+      const myCheckin = checkins.find(c => c.userId === user?.uid);
+      const isAnonymous = !user || user.isAnonymous;
+
+      return (
+        <div className="min-h-screen">
+          {/* Top Header */}
+          <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 p-4 sticky top-0 z-50 shadow-lg">
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* --- לוגו הקבוצה עם אפקט ברק כחול --- */}
+                <img 
+                  src="https://scontent.ftlv6-1.fna.fbcdn.net/v/t39.30808-6/326804034_1124219691493080_4014716352676450050_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=iKMFhLf2I4MQ7kNvwFSi3ld&_nc_oc=Ado7R6hwDGftfHiUm4ATjuCZHs_-hbBhmyo4znnV9-hGgI6HY2BqSkjs0K_oM4PUtdsbWPkPZvSw40gwtqyDnHvJ&_nc_zt=23&_nc_ht=scontent.ftlv6-1.fna&_nc_gid=KxtRKFBJNJbakjlQZsyBVA&_nc_ss=7b2a8&oh=00_Af46iSC6rYn8ldlBXSQyNWEwX_7SJZsxRej7M2PoUzRz_w&oe=6A06D57A" 
+                  alt="לוגו הקבוצה" 
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-blue-500 object-cover shadow-[0_0_16px_rgba(59,130,246,0.8)]"
+                  onError={(e) => { e.target.src = 'https://placehold.co/100x100/171717/3b82f6?text=🤘'; }}
+                />
+                <div>
+                  <h1 className="text-lg sm:text-xl font-bold text-white tracking-wider uppercase">CHAPTER 491 <span className="text-blue-500 block sm:inline">GOES TO BUDAPEST</span></h1>
+                  <p className="text-xs text-neutral-400">מדריך וראדאר • קבוצת ישראל 🤘</p>
+                </div>
+              </div>
+              {!isAnonymous && (
+                 <button onClick={handleLogout} className="text-xs flex flex-col items-center text-neutral-500 hover:text-white">
+                    <i className="fa-solid fa-right-from-bracket text-lg mb-1"></i>
+                    התנתק
+                 </button>
+              )}
+            </div>
+          </header>
+
+          <main className="max-w-2xl mx-auto p-4 pb-safe">
+            
+            {}
+            {/* 1. TAB: RADAR (FRIENDS) */}
+            {activeTab === 'friends' && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="bg-gradient-to-br from-blue-900/20 to-neutral-900 border border-blue-900/30 rounded-xl p-5 shadow-lg">
+                  
+                  {isAnonymous ? (
+                    <div className="text-center py-4 space-y-4">
+                      <div className="w-16 h-16 bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-2 text-blue-500 text-3xl shadow-[0_0_16px_rgba(59,130,246,0.3)]">
+                        <i className="fa-solid fa-crosshairs"></i>
+                      </div>
+                      <h2 className="text-xl font-bold text-white">איפה כולם באצטדיון?</h2>
+                      <p className="text-sm text-neutral-400 max-w-sm mx-auto">
+                        התחבר עכשיו כדי לשתף את המיקום שלך, ולראות במדויק כמה מטרים החברים רחוקים ממך במהלך ההופעה.
+                      </p>
+                      <button onClick={handleGoogleLogin} className="w-full sm:w-auto mx-auto bg-white hover:bg-gray-100 text-black font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-3 transition-colors shadow-lg">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                        התחבר עם חשבון גוגל
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        {user.photoURL ? (
+                          <img src={user.photoURL} alt="Profile" className="w-12 h-12 rounded-full border-2 border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-neutral-800 flex items-center justify-center border-2 border-blue-500 text-blue-500 text-xl">
+                            <i className="fa-solid fa-user"></i>
+                          </div>
+                        )}
+                        <div>
+                          <h2 className="font-bold text-white">אהלן, {user.displayName}!</h2>
+                          <p className="text-xs text-neutral-400">ראדאר GPS פעיל</p>
+                        </div>
+                      </div>
+
+                      {myCheckin && !showCheckInForm && (
+                        <div className="p-3 bg-neutral-950/50 rounded-lg border border-neutral-800 flex justify-between items-center mt-2">
+                          <div>
+                            <span className="text-xs text-neutral-500 block">מיקום נוכחי:</span>
+                            <div className="flex items-center gap-2">
+                               <span className="font-bold text-blue-400">{myCheckin.zone}</span>
+                               {myCheckin.location && <i className="fa-solid fa-satellite-dish text-green-500 text-xs" title="GPS פעיל"></i>}
+                            </div>
+                          </div>
+                          <button onClick={() => setShowCheckInForm(true)} className="text-xs bg-neutral-800 hover:bg-neutral-700 px-3 py-2 rounded-md text-white transition-colors">
+                            עדכן מיקום
+                          </button>
+                        </div>
+                      )}
+
+                      {(!myCheckin || showCheckInForm) && (
+                        <div className="mt-4 space-y-4 bg-neutral-950/80 p-4 rounded-xl border border-neutral-800">
+                          <div>
+                            <label className="text-xs text-neutral-400 mb-1 block">באיזה אזור אתה?</label>
+                            <select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)} className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500">
+                              {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
+                            </select>
+                          </div>
+                          
+                          <div className="flex items-center justify-between bg-neutral-900 p-3 rounded-lg border border-neutral-700">
+                            <div className="flex items-center gap-2">
+                               <i className={`fa-solid fa-location-crosshairs ${useGps ? 'text-green-500' : 'text-neutral-500'}`}></i>
+                               <label className="text-sm font-medium text-white cursor-pointer select-none" htmlFor="gps-toggle">
+                                 שתף מרחק מדויק (GPS)
+                               </label>
+                            </div>
+                            <input id="gps-toggle" type="checkbox" checked={useGps} onChange={(e) => setUseGps(e.target.checked)} className="w-5 h-5 accent-blue-500" />
+                          </div>
+
+                          <div>
+                            <label className="text-xs text-neutral-400 mb-1 block">הודעה לחברים (אופציונלי):</label>
+                            <input type="text" placeholder="לדוגמה: תפסנו מקום בצד ימין" value={statusMessage} onChange={(e) => setStatusMessage(e.target.value)} className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" />
+                          </div>
+
+                          {errorMsg && (
+                            <div className="flex items-center gap-2 text-red-400 text-xs bg-red-900/20 p-2 rounded">
+                              <i className="fa-solid fa-triangle-exclamation"></i>
+                              <p>{errorMsg}</p>
+                            </div>
+                          )}
+
+                          <div className="pt-2 flex gap-2">
+                            <button onClick={handleCheckIn} disabled={isSaving} className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors shadow-lg">
+                              <i className="fa-solid fa-thumbtack"></i>
+                              {isSaving ? 'מעדכן...' : "צ'ק-אין!"}
+                            </button>
+                            {showCheckInForm && myCheckin && (
+                               <button onClick={() => setShowCheckInForm(false)} className="px-4 bg-neutral-800 hover:bg-neutral-700 text-white py-3 rounded-lg transition-colors">ביטול</button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Radar List */}
+                <div className="space-y-4 mt-6">
+                  <h3 className="font-bold text-neutral-400 flex justify-between items-end border-b border-neutral-800 pb-2">
+                    <span>ראדאר קבוצתי ({checkins.length} סומנו)</span>
+                  </h3>
+
+                  {checkins.length === 0 && (
+                    <div className="text-center py-8 text-neutral-500">
+                      <i className="fa-solid fa-location-dot text-4xl mb-3 opacity-20 block"></i>
+                      <p>הראדאר ריק.<br/>תהיו הראשונים לסמן מיקום!</p>
+                    </div>
+                  )}
+
+                  {STADIUM_ZONES.map(zone => {
+                    const zoneCheckins = checkinsByZone[zone];
+                    if (!zoneCheckins || zoneCheckins.length === 0) return null;
+
+                    return (
+                      <div key={zone} className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden shadow">
+                        <div className="bg-neutral-800/50 px-4 py-2 border-b border-neutral-800 flex justify-between items-center">
+                          <h4 className="font-bold text-white text-sm">{zone}</h4>
+                          <span className="text-xs bg-neutral-950 px-2 py-1 rounded-md text-neutral-400">{zoneCheckins.length} אנשים</span>
+                        </div>
+                        <div className="divide-y divide-neutral-800/50">
+                          {zoneCheckins.map(c => {
+                            let distanceText = null;
+                            if (c.location && myLocation && c.userId !== user?.uid) {
+                               distanceText = calculateDistanceDetailed(myLocation.lat, myLocation.lng, c.location.lat, c.location.lng);
+                            }
+
+                            return (
+                              <div key={c.id} className={`p-3 flex gap-3 items-start ${c.userId === user?.uid ? 'bg-blue-900/20' : ''}`}>
+                                <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center shrink-0 overflow-hidden border border-neutral-700">
+                                  {c.photoURL ? (
+                                    <img src={c.photoURL} alt={c.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-blue-400 font-bold text-lg">{c.name.charAt(0)}</span>
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-bold text-sm text-neutral-200">
+                                      {c.name} {c.userId === user?.uid && '(אתה)'}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-500">{timeAgo(c.timestamp)}</span>
+                                  </div>
+                                  {c.message && (
+                                    <p className="text-sm text-neutral-400 mt-1 flex gap-1.5 items-start">
+                                      <i className="fa-solid fa-comment-dots mt-1 text-neutral-500"></i>
+                                      {c.message}
+                                    </p>
+                                  )}
+                                  {distanceText && (
+                                    <div className="mt-2 inline-flex items-center gap-1 bg-green-900/20 text-green-400 text-[10px] px-2 py-1 rounded-full border border-green-900/30">
+                                      <i className="fa-solid fa-route"></i>
+                                      {distanceText}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* 2. TAB: MAP (LOCATIONS) */}
+            {activeTab === 'map' && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="bg-neutral-900 rounded-xl p-4 border border-neutral-800 shadow-sm text-sm text-neutral-400">
+                  מרחקים מחושבים בקו אווירי ממלון Mövenpick. לחצו על "נווט" לפתיחת Google Maps.
+                </div>
+                {PLACES.map((p) => {
+                  const distKm = calculateDistanceAir(HOTEL_COORDS.lat, HOTEL_COORDS.lng, p.lat, p.lng);
+                  const distText = p.id === 'hotel' ? 'אתה כאן' : `${distKm.toFixed(1)} ק"מ ממרכז העיר`;
+                  return (
+                    <div key={p.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 sm:items-center">
+                      <div className={`w-12 h-12 rounded-full bg-neutral-950 flex items-center justify-center border border-neutral-800 text-xl shrink-0 ${p.color}`}>
+                        <i className={p.icon}></i>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-white">{p.name}</h3>
+                        <p className="text-sm text-neutral-400 mt-1">{p.desc}</p>
+                        <div className="flex items-center gap-1 mt-2 text-xs font-medium text-yellow-500/80">
+                          <i className="fa-solid fa-location-arrow"></i>
+                          <span>{distText}</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          if (p.id === 'hotel') {
+                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=transit`, '_blank');
+                          } else {
+                            window.open(`https://www.google.com/maps/dir/?api=1&origin=${HOTEL_COORDS.lat},${HOTEL_COORDS.lng}&destination=${p.lat},${p.lng}&travelmode=transit`, '_blank');
+                          }
+                        }}
+                        className={`px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 w-full sm:w-auto transition-colors ${p.id === 'hotel' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-neutral-800 hover:bg-neutral-700'}`}
+                      >
+                        <i className="fa-solid fa-map"></i> {p.id === 'hotel' ? 'נווט למלון ממקומי' : 'נווט מבית המלון'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {}
+            {/* 3. TAB: TRANSPORT */}
+            {activeTab === 'transport' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div className="bg-gradient-to-br from-red-900/20 to-neutral-900 border border-red-900/30 rounded-xl p-5">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-3">
+                    <i className="fa-solid fa-ticket text-red-500"></i>
+                    הגעה להופעה (Puskás Aréna)
+                  </h2>
+                  <p className="text-sm text-neutral-300 leading-relaxed mb-4">
+                    האצטדיון ענק וביום ההופעה יהיו פקקים מטורפים. <strong>אל תקחו מונית!</strong> הדרך המהירה והבטוחה ביותר היא המטרו.
+                  </p>
+                  <div className="flex items-start gap-3 bg-neutral-950/50 p-3 rounded-lg border border-neutral-800">
+                    <i className="fa-solid fa-train-subway text-red-500 text-xl mt-1"></i>
+                    <div>
+                      <strong className="block text-white">מטרו M2 (הקו האדום)</strong>
+                      <span className="text-sm text-neutral-400">רדו בתחנת "Puskás Ferenc Stadion". נסיעה של 10 דקות ממרכז העיר. משם פשוט תלכו בעקבות אלפי חולצות מטאליקה שחורות.</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+                    <h3 className="font-bold text-white flex items-center gap-2 mb-2">
+                      <i className="fa-solid fa-bus text-blue-400"></i>
+                      אפליקציית BudapestGO
+                    </h3>
+                    <p className="text-sm text-neutral-400 mb-4">
+                      אפליקציית החובה לתחבורה. דרכה קונים כרטיסים ופסים יומיים למטרו ולאוטובוסים.
+                    </p>
+                    <div className="flex gap-2">
+                      <a href="https://play.google.com/store/apps/details?id=hu.webvalto.bkkfutar" target="_blank" className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-xs text-center py-2 rounded-lg transition-colors">Android</a>
+                      <a href="https://apps.apple.com/il/app/budapestgo/id916193835" target="_blank" className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-xs text-center py-2 rounded-lg transition-colors">iOS</a>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5">
+                    <h3 className="font-bold text-white flex items-center gap-2 mb-2">
+                      <i className="fa-solid fa-taxi text-yellow-400"></i>
+                      מוניות - Bolt
+                    </h3>
+                    <p className="text-sm text-neutral-400 mb-4">
+                      <strong>אין Uber בבודפשט!</strong> השתמשו רק באפליקציית Bolt. לעולם אל תעצרו מונית רנדומלית ברחוב (הרבה עוקצים לתיירים).
+                    </p>
+                    <a href="https://bolt.eu/" target="_blank" className="block w-full bg-neutral-800 hover:bg-neutral-700 text-xs text-center py-2 rounded-lg transition-colors">הורדת Bolt</a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* 4. TAB: CURRENCY */}
+            {activeTab === 'currency' && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-center shadow-lg">
+                  <div className="w-16 h-16 bg-neutral-950 rounded-full flex items-center justify-center mx-auto mb-4 border border-neutral-800 text-yellow-500 text-3xl">
+                    <i className="fa-solid fa-wallet"></i>
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-2">מחשבון פורינט (HUF)</h2>
+                  
+                  <div className="max-w-xs mx-auto space-y-4 mt-6">
+                    <div className="flex flex-col gap-2 text-right">
+                      <label className="text-sm font-medium text-neutral-300">סכום להמרה:</label>
+                      <div className="flex gap-2">
+                        <input type="number" value={exchangeAmount} onChange={(e) => setExchangeAmount(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white focus:outline-none focus:border-yellow-500 text-left" dir="ltr"/>
+                        <select value={exchangeCurrency} onChange={(e) => setExchangeCurrency(e.target.value)} className="w-24 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white focus:outline-none focus:border-yellow-500" dir="ltr">
+                          <option value="ILS">₪ ILS</option>
+                          <option value="EUR">€ EUR</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="bg-neutral-950 border border-neutral-800 rounded-lg p-4">
+                      <span className="block text-sm text-neutral-500 mb-1">שווה בערך ל:</span>
+                      <div className="text-3xl font-bold text-white flex justify-center items-baseline gap-2" dir="ltr">
+                        <span>{calculatedHUF}</span>
+                        <span className="text-lg text-yellow-500">HUF</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-900/10 border border-yellow-900/30 rounded-xl p-4 flex gap-3">
+                  <i className="fa-solid fa-circle-info text-yellow-500 text-lg mt-0.5"></i>
+                  <p className="text-sm text-neutral-300 leading-relaxed">
+                    <strong>טיפ זהב:</strong> אל תחליפו כסף בשדה התעופה. העדיפו למשוך מכספומטים של בנקים רשמיים (OTP, Erste) בעיר, והימנעו מכספומטים בצבע צהוב-כחול של "Euronet" שלוקחים עמלות שחיטה. רוב מוחלט של המקומות מכבדים Apple/Google Pay.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* 5. TAB: BARS & ATTRACTIONS */}
+            {activeTab === 'bars' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                
+                {/* Search Box Section */}
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg">
+                  <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                    <i className="fa-solid fa-magnifying-glass text-yellow-500"></i>
+                    חיפוש חופשי בעיר
+                  </h2>
+                  <p className="text-xs text-neutral-400 mb-4">חיפוש מהיר של נקודות עניין סביבך. החיפוש יפתח ב-Google Maps.</p>
+                  
+                  <div className="flex gap-2 mb-4">
+                    <input 
+                      type="text" 
+                      placeholder="לדוגמה: בית מרקחת, כספומט..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && searchQuery.trim() && window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')}
+                      className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white focus:outline-none focus:border-yellow-500"
+                    />
+                    <button 
+                      onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')}
+                      disabled={!searchQuery.trim()}
+                      className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white px-5 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      <i className="fa-solid fa-search"></i>
+                    </button>
+                  </div>
+
+                  {/* Quick Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { icon: '🍔', term: 'Restaurants', label: 'מסעדות ואוכל' },
+                      { icon: '🎸', term: 'Rock Bars', label: 'פאבים של רוק' },
+                      { icon: '🤘', term: 'Rock Merchandise Stores', label: 'מוצרי רוק וחולצות' },
+                      { icon: '🎸', term: 'Guitar Stores', label: 'חנויות כלי נגינה' },
+                      { icon: '☕', term: 'Starbucks', label: 'סטארבקס' },
+                      { icon: '💊', term: 'Pharmacy', label: 'בית מרקחת' },
+                      { icon: '🛒', term: 'Supermarket', label: 'סופרמרקט' }
+                    ].map(tag => (
+                      <button 
+                        key={tag.term}
+                        onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tag.term + ' in Budapest')}`, '_blank')}
+                        className="bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 px-3 py-2 rounded-full transition-colors border border-neutral-700 flex items-center gap-1.5"
+                      >
+                        <span>{tag.icon}</span>
+                        <span>{tag.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Curated List */}
+                {BARS_AND_ATTRACTIONS.map((section, idx) => (
+                  <div key={idx}>
+                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2 border-b border-neutral-800 pb-2">
+                      <i className={section.icon}></i>
+                      {section.category}
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {section.items.map((item, itemIdx) => (
+                        <div key={itemIdx} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 hover:border-neutral-700 transition-colors flex flex-col justify-between">
+                          <div>
+                            <h3 className="font-bold text-white mb-1">{item.name}</h3>
+                            <p className="text-sm text-neutral-400 leading-relaxed">{item.desc}</p>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button 
+                              onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.name + ' Budapest')}`, '_blank')}
+                              className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2 rounded-lg transition-colors border border-neutral-700 shadow-sm"
+                            >
+                              <i className="fa-solid fa-map-location-dot text-blue-400"></i> נווט למקום
+                            </button>
+                            {item.link && (
+                               <a href={item.link} target="_blank" className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors shadow-lg">
+                                 <i className="fa-solid fa-ticket"></i> {item.linkText}
+                               </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </main>
+
+          {}
+          {/* Fixed Bottom Navigation (5 Tabs) */}
+          <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/85 backdrop-blur-md border-t border-neutral-800 z-50">
+            <div className="max-w-2xl mx-auto flex justify-between px-1 py-3">
+              {[
+                { id: 'friends', icon: 'fa-users', label: 'ראדאר' },
+                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות' },
+                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה' },
+                { id: 'currency', icon: 'fa-wallet', label: 'המרה' },
+                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
+              ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)} 
+                  className={`flex flex-col items-center justify-center w-full transition-all duration-200 ${activeTab === tab.id ? 'text-blue-400 scale-110' : 'text-neutral-500 hover:text-white'}`}
+                >
+                  <i className={`fa-solid ${tab.icon} text-xl mb-1`}></i>
+                  <span className="text-[10px] font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
