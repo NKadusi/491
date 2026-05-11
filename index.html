@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -30,9 +29,8 @@
 </head>
 <body class="text-neutral-200 min-h-screen">
   
-  <!-- לוכד שגיאות קריטי ברמת הדפדפן -->
   <div id="startup-error" style="display:none; color:white; background:#ef4444; padding:20px; text-align:center; direction:rtl; font-weight:bold; z-index:9999; position:fixed; top:0; left:0; right:0;">
-    שגיאת מערכת חמורה: אנא נקה את מטמון הדפדפן ורענן את העמוד.
+    שגיאת מערכת: אנא נקה את מטמון הדפדפן ורענן את העמוד.
   </div>
 
   <div id="root"></div>
@@ -40,7 +38,7 @@
   <script type="text/babel" data-type="module">
     const { useState, useEffect, useMemo, Component } = React;
 
-    // --- Error Boundary (לוכד שגיאות ריאקט) ---
+    // --- Error Boundary ---
     class ErrorBoundary extends Component {
       constructor(props) {
         super(props);
@@ -54,9 +52,9 @@
           return (
             <div className="p-8 text-center bg-red-900/90 text-white min-h-screen flex flex-col justify-center items-center">
               <i className="fa-solid fa-triangle-exclamation text-5xl mb-4 text-red-400"></i>
-              <h1 className="text-2xl font-bold mb-2">משהו השתבש בתצוגה</h1>
-              <p className="text-sm text-red-200 mb-6" dir="ltr">{this.state.error.message}</p>
-              <button onClick={() => window.location.reload()} className="bg-white text-red-900 font-bold px-6 py-3 rounded-xl shadow-lg">רענן את האפליקציה</button>
+              <h1 className="text-2xl font-bold mb-2">משהו השתבש</h1>
+              <p className="text-sm mb-6" dir="ltr">{this.state.error.message}</p>
+              <button onClick={() => window.location.reload()} className="bg-white text-red-900 font-bold px-6 py-3 rounded-xl shadow-lg">רענן אפליקציה</button>
             </div>
           );
         }
@@ -68,7 +66,6 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // --- הגדרות פיירבייס המקוריות שלך ---
     const firebaseConfig = {
       apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
       authDomain: "goes-to-budapest.firebaseapp.com",
@@ -84,23 +81,21 @@
     const db = getFirestore(app);
     const databaseAppId = 'metallica-budapest-app';
 
-    // --- נתונים קבועים ---
     const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
     const PLACES = [
       { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-400' },
-      { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'כאן קורה הקסם (מטרו M2)', icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
+      { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'מקום ההופעה (מטרו M2)', icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
       { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4975, lng: 19.0550, desc: 'מרצ\'נדייז רשמי', icon: 'fa-solid fa-bag-shopping', color: 'text-white' }
     ];
 
     const CURATED_BARS = [
-      { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם. חובה.' },
-      { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק ופרוע.' },
-      { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים בלב העיר.' }
+      { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם.' },
+      { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק.' },
+      { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים.' }
     ];
 
-    // --- Helpers ---
     function calculateDistanceDetailed(lat1, lon1, lat2, lon2) {
       if (!lat1 || !lon1 || !lat2 || !lon2) return null;
       const R = 6371; 
@@ -109,8 +104,7 @@
       const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
       const distKm = R * c; 
-      if (distKm < 1) return `${Math.round(distKm * 1000)} מטר ממך`;
-      return `${distKm.toFixed(1)} ק"מ ממך`;
+      return distKm < 1 ? `${Math.round(distKm * 1000)} מטר` : `${distKm.toFixed(1)} ק"מ`;
     }
 
     function timeAgo(timestamp) {
@@ -118,8 +112,7 @@
       const seconds = Math.floor((Date.now() - timestamp) / 1000);
       if (seconds < 60) return 'עכשיו';
       const minutes = Math.floor(seconds / 60);
-      if (minutes < 60) return `לפני ${minutes} דק'`;
-      return `לפני ${Math.floor(minutes/60)} שעות`;
+      return minutes < 60 ? `לפני ${minutes} דק'` : `לפני ${Math.floor(minutes/60)} שע'`;
     }
 
     function App() {
@@ -134,8 +127,6 @@
       const [errorMsg, setErrorMsg] = useState('');
       const [myLocation, setMyLocation] = useState(null);
       const [searchQuery, setSearchQuery] = useState('');
-
-      // Currency State
       const [exchangeAmount, setExchangeAmount] = useState('100');
       const [fromCurrency, setFromCurrency] = useState('ILS');
       const [toCurrency, setToCurrency] = useState('HUF');
@@ -144,20 +135,12 @@
         const initAuth = async () => {
           try {
             const result = await getRedirectResult(auth);
-            if (result && result.user) { 
-                setUser(result.user); 
-                return; 
-            }
-          } catch (e) { 
-              console.error("Auth redirect error:", e); 
-          }
+            if (result && result.user) { setUser(result.user); return; }
+          } catch (e) { console.error("Auth redirect error:", e); }
 
           onAuthStateChanged(auth, (currentUser) => {
-            if (currentUser) {
-                setUser(currentUser);
-            } else {
-                signInAnonymously(auth).catch(err => console.log("Anonymous login skipped/failed", err));
-            }
+            if (currentUser) setUser(currentUser);
+            else signInAnonymously(auth).catch(() => {});
           });
         };
         initAuth();
@@ -166,13 +149,10 @@
       useEffect(() => {
         if (!user) return;
         const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
-        const unsubscribe = onSnapshot(checkinsRef, (snapshot) => {
+        return onSnapshot(checkinsRef, (snapshot) => {
           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
-        }, (error) => {
-            console.error("Firestore read error:", error);
         });
-        return () => unsubscribe();
       }, [user]);
 
       useEffect(() => {
@@ -194,12 +174,7 @@
         if (!user) return;
         setIsSaving(true);
         let gps = null;
-        if (useGps) {
-          try {
-            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-            gps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          } catch (e) {}
-        }
+        if (useGps && myLocation) gps = myLocation;
         try {
             await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
                 name: user.isAnonymous ? "אורח" : user.displayName,
@@ -212,9 +187,7 @@
             });
             setShowCheckInForm(false);
             setStatusMessage('');
-        } catch (error) {
-            console.error("Error saving checkin:", error);
-        }
+        } catch (e) { console.error(e); }
         setIsSaving(false);
       };
 
@@ -222,18 +195,14 @@
           const rates = { EUR: 1, ILS: 4.0, HUF: 395 };
           const amt = parseFloat(exchangeAmount);
           if (isNaN(amt)) return '0';
-          const baseEur = amt / rates[fromCurrency];
-          const result = baseEur * rates[toCurrency];
+          const result = (amt / rates[fromCurrency]) * rates[toCurrency];
           return toCurrency === 'HUF' ? Math.round(result).toLocaleString() : result.toFixed(2);
       };
 
       const checkinsByZone = useMemo(() => {
         const grouped = {};
         STADIUM_ZONES.forEach(z => grouped[z] = []);
-        checkins.forEach(c => { 
-            if(grouped[c.zone]) grouped[c.zone].push(c); 
-            else grouped[c.zone] = [c]; 
-        });
+        checkins.forEach(c => { if(grouped[c.zone]) grouped[c.zone].push(c); });
         return grouped;
       }, [checkins]);
 
@@ -245,66 +214,46 @@
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img 
-                  src="./logo.jpg" 
-                  onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100x100/1e3a8a/ffffff?text=M"; }}
+                  src="https://scontent.ftlv6-1.fna.fbcdn.net/v/t39.30808-6/326804034_1124219691493080_4014716352676450050_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&oh=00_Af46iSC6rYn8ldlBXSQyNWEwX_7SJZsxRej7M2PoUzRz_w&oe=6A06D57A" 
                   className="w-12 h-12 rounded-full border-2 border-blue-400 object-cover lightning-glow" 
-                  alt="Logo"
                 />
                 <div>
                   <h1 className="text-lg font-bold text-white tracking-wider">CHAPTER 491 <span className="text-blue-400">BUDAPEST</span></h1>
-                  <p className="text-[11px] text-blue-200"><i className="fa-solid fa-bolt text-yellow-400 mr-1"></i> ראדאר משלחת חי</p>
+                  <p className="text-[11px] text-blue-200"><i className="fa-solid fa-bolt text-yellow-400 mr-1"></i> ראדאר המשלחת</p>
                 </div>
               </div>
-              {!user?.isAnonymous && user && (
-                <button onClick={() => signOut(auth)} className="text-blue-300 hover:text-white p-2"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
+              {!user?.isAnonymous && (
+                <button onClick={() => signOut(auth)} className="text-blue-300 p-2"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
               )}
             </div>
           </header>
 
-          <main className="p-4 flex-1 w-full relative z-10">
+          <main className="p-4 flex-1 relative z-10">
             
-            {/* RADAR TAB */}
             {activeTab === 'friends' && (
-              <div className="space-y-5 animate-in fade-in">
-                <div className="bg-black/60 border border-blue-900/50 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
-                  {user?.isAnonymous || !user ? (
+              <div className="space-y-5">
+                <div className="bg-black/60 border border-blue-900/50 rounded-2xl p-6 shadow-xl">
+                  {user?.isAnonymous ? (
                     <div className="text-center space-y-4">
-                      <div className="w-16 h-16 mx-auto bg-blue-900/40 rounded-full flex items-center justify-center border border-blue-500/50 lightning-glow mb-2">
-                        <i className="fa-solid fa-radar text-2xl text-blue-400 animate-pulse"></i>
-                      </div>
                       <h2 className="text-xl font-bold text-white">איפה כולם באצטדיון?</h2>
-                      <p className="text-sm text-gray-300">התחבר כדי לראות בדיוק מי נמצא איתך באזור ולשתף מיקום.</p>
-                      <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 shadow-lg hover:bg-gray-200 transition active:scale-95">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="G" />
+                      <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" />
                         התחבר עם Google
                       </button>
-                      {errorMsg && <p className="text-red-400 text-sm mt-2">{errorMsg}</p>}
                     </div>
                   ) : (
                     <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <div>
-                          <p className="text-xs text-blue-300">מחובר כ-</p>
-                          <h2 className="font-bold text-white text-lg">{user.displayName}</h2>
-                        </div>
-                        <button onClick={() => setShowCheckInForm(!showCheckInForm)} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition active:scale-95">
-                           {showCheckInForm ? 'סגור' : 'עדכן מיקום'} <i className="fa-solid fa-location-crosshairs ml-1"></i>
-                        </button>
+                      <div className="flex justify-between items-center">
+                        <h2 className="font-bold text-white text-lg">אהלן, {user.displayName}</h2>
+                        <button onClick={() => setShowCheckInForm(!showCheckInForm)} className="bg-blue-600 px-4 py-2 rounded-xl text-sm font-bold">עדכן מיקום</button>
                       </div>
-                      
                       {showCheckInForm && (
-                        <div className="space-y-4 bg-blue-950/30 p-5 rounded-xl border border-blue-800/50 mb-4 mt-4">
-                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3.5 text-white font-bold outline-none focus:border-blue-400">
+                        <div className="space-y-4 bg-blue-950/30 p-4 rounded-xl border border-blue-800/50 mt-4">
+                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white">
                             {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
                           </select>
-                          <input type="text" placeholder="מה המצב? (אופציונלי)" value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3.5 text-white outline-none focus:border-blue-400" />
-                          <div className="flex items-center gap-2 text-sm text-blue-200">
-                            <input type="checkbox" checked={useGps} onChange={e => setUseGps(e.target.checked)} className="w-4 h-4 accent-blue-500" />
-                            <span>שתף מרחק מדויק לחברים (GPS)</span>
-                          </div>
-                          <button onClick={handleCheckIn} disabled={isSaving} className="w-full bg-blue-600 py-3.5 rounded-xl font-bold text-white shadow-md active:scale-95 transition flex justify-center items-center gap-2">
-                             {isSaving ? <i className="fa-solid fa-circle-notch fa-spin"></i> : 'שמור מיקום'}
-                          </button>
+                          <input type="text" placeholder="הודעה לחברים..." value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white" />
+                          <button onClick={handleCheckIn} disabled={isSaving} className="w-full bg-blue-600 py-3 rounded-xl font-bold">שמור צ'ק-אין</button>
                         </div>
                       )}
                     </div>
@@ -312,32 +261,27 @@
                 </div>
 
                 <div className="space-y-4">
-                  {Object.keys(checkinsByZone).map(zone => {
+                  {STADIUM_ZONES.map(zone => {
                     const zoneCheckins = checkinsByZone[zone];
                     if (!zoneCheckins || zoneCheckins.length === 0) return null;
                     return (
-                      <div key={zone} className="bg-black/60 border border-gray-800 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
-                        <div className="bg-gray-900/80 px-5 py-3 flex justify-between items-center border-b border-gray-800">
-                          <h4 className="font-bold text-base text-blue-400"><i className="fa-solid fa-map-pin ml-2 text-gray-500"></i>{zone}</h4>
-                          <span className="text-[11px] bg-blue-900/50 border border-blue-800 px-2.5 py-1 rounded-full text-blue-200 font-medium">{zoneCheckins.length} חברים</span>
+                      <div key={zone} className="bg-black/60 border border-gray-800 rounded-2xl overflow-hidden">
+                        <div className="bg-gray-900/80 px-4 py-2 flex justify-between border-b border-gray-800 text-blue-400 font-bold">
+                          <span>{zone}</span>
+                          <span className="text-xs bg-blue-900/50 px-2 rounded-full text-blue-200">{zoneCheckins.length}</span>
                         </div>
-                        <div className="divide-y divide-gray-800/50">
-                          {zoneCheckins.map(c => (
-                            <div key={c.id} className="p-4 flex gap-4 items-center hover:bg-gray-900/30 transition">
-                              <img src={c.photoURL || 'https://placehold.co/100x100/1e3a8a/ffffff?text=🤘'} className="w-12 h-12 rounded-full border border-gray-700 object-cover" />
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start">
-                                  <span className="font-bold text-sm text-white">{c.name}</span>
-                                  <span className="text-[10px] text-gray-500 bg-gray-900 px-2 py-0.5 rounded">{timeAgo(c.timestamp)}</span>
-                                </div>
-                                {c.message && <p className="text-xs text-gray-300 mt-1">{c.message}</p>}
-                                {c.location && myLocation && c.userId !== user?.uid && (
-                                  <div className="text-[11px] text-green-400 mt-1.5 font-medium flex items-center gap-1"><i className="fa-solid fa-location-arrow"></i> {calculateDistanceDetailed(myLocation.lat, myLocation.lng, c.location.lat, c.location.lng)}</div>
-                                )}
-                              </div>
+                        {zoneCheckins.map(c => (
+                          <div key={c.id} className="p-4 flex gap-4 items-center border-b border-gray-800/30">
+                            <img src={c.photoURL || 'https://placehold.co/100/1e3a8a/ffffff?text=🤘'} className="w-10 h-10 rounded-full border border-gray-700" />
+                            <div className="flex-1 text-sm">
+                              <div className="flex justify-between font-bold text-white"><span>{c.name}</span><span className="text-[10px] text-gray-500">{timeAgo(c.timestamp)}</span></div>
+                              {c.message && <p className="text-gray-400 text-xs mt-0.5">{c.message}</p>}
+                              {c.location && myLocation && c.userId !== user?.uid && (
+                                <div className="text-[10px] text-green-400 mt-1"><i className="fa-solid fa-location-arrow mr-1"></i> {calculateDistanceDetailed(myLocation.lat, myLocation.lng, c.location.lat, c.location.lng)} ממך</div>
+                              )}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
                     );
                   })}
@@ -345,118 +289,83 @@
               </div>
             )}
 
-            {/* MAP TAB */}
             {activeTab === 'map' && (
               <div className="space-y-4 animate-in fade-in">
                 {PLACES.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-gray-800 rounded-2xl p-5 flex gap-4 items-center shadow-lg backdrop-blur-sm">
-                    <div className={`w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-2xl shrink-0 border border-gray-700 ${p.color}`}><i className={p.icon}></i></div>
+                  <div key={p.id} className="bg-black/60 border border-gray-800 rounded-2xl p-5 flex gap-4 items-center shadow-lg">
+                    <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
                     <div className="flex-1">
                       <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 mt-1">{p.desc}</p>
+                      <p className="text-xs text-gray-400">{p.desc}</p>
                     </div>
-                    <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`, '_blank')} className="bg-blue-600 hover:bg-blue-500 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md transition active:scale-90"><i className="fa-solid fa-location-arrow text-xl"></i></button>
+                    <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`, '_blank')} className="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-location-arrow"></i></button>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* TRANSPORT TAB */}
             {activeTab === 'transport' && (
-              <div className="space-y-4 animate-in fade-in">
-                <div className="bg-blue-900/20 border border-blue-900/50 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                  <div className="flex items-center gap-3 mb-3">
-                    <i className="fa-solid fa-train-subway text-2xl text-red-500"></i>
-                    <h2 className="text-xl font-bold text-white">מטרו M2 (הקו האדום)</h2>
-                  </div>
-                  <p className="text-sm text-gray-300 leading-relaxed">הדרך הטובה והמהירה ביותר לאצטדיון. רדו בתחנת <strong className="text-white">Puskás Ferenc Stadion</strong>. מומלץ לא לקחת מוניות לאזור בגלל עומסי התנועה העצומים!</p>
+              <div className="space-y-4">
+                <div className="bg-blue-900/20 border border-blue-900/50 rounded-2xl p-6">
+                  <h2 className="text-xl font-bold text-white mb-2"><i className="fa-solid fa-train-subway text-red-500 mr-2"></i>מטרו M2 (אדום)</h2>
+                  <p className="text-sm text-gray-300">הדרך המהירה לאצטדיון. רדו בתחנת <strong>Puskás Ferenc Stadion</strong>. מומלץ לא להסתמך על מוניות בזמן ההופעה!</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 shadow-lg backdrop-blur-sm flex flex-col justify-between">
-                    <div>
-                      <i className="fa-solid fa-car text-3xl text-yellow-500 mb-2"></i>
-                      <h4 className="font-bold text-lg text-white mb-1">Bolt</h4>
-                      <p className="text-[11px] text-gray-400 mb-4">אין תמיכה ב-Uber בבודפשט.</p>
-                    </div>
-                    <a href="https://bolt.eu/" target="_blank" className="bg-yellow-500 hover:bg-yellow-400 text-black py-2.5 rounded-xl text-sm font-bold block transition">הורדת Bolt</a>
+                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 flex flex-col justify-between h-40">
+                    <i className="fa-solid fa-car text-3xl text-yellow-500"></i>
+                    <h4 className="font-bold text-white">Bolt</h4>
+                    <a href="https://bolt.eu/" target="_blank" className="bg-yellow-500 text-black py-2 rounded-xl text-xs font-bold">הורדת Bolt</a>
                   </div>
-                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 shadow-lg backdrop-blur-sm flex flex-col justify-between">
-                    <div>
-                      <i className="fa-solid fa-ticket text-3xl text-blue-400 mb-2"></i>
-                      <h4 className="font-bold text-lg text-white mb-1">BudapestGO</h4>
-                      <p className="text-[11px] text-gray-400 mb-4">כרטיסי נסיעה דיגיטליים</p>
-                    </div>
-                    <a href="https://bkk.hu/en/tickets-and-passes/budapestgo/" target="_blank" className="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-bold block transition">הורדת אפליקציה</a>
+                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 flex flex-col justify-between h-40">
+                    <i className="fa-solid fa-ticket text-3xl text-blue-400"></i>
+                    <h4 className="font-bold text-white">BudapestGO</h4>
+                    <a href="https://bkk.hu/en/tickets-and-passes/budapestgo/" target="_blank" className="bg-blue-600 text-white py-2 rounded-xl text-xs font-bold">הורדת אפליקציה</a>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* CURRENCY TAB */}
             {activeTab === 'currency' && (
-              <div className="space-y-4 animate-in fade-in">
-                <div className="bg-black/80 border border-gray-800 rounded-2xl p-8 text-center shadow-2xl backdrop-blur-md">
-                  <i className="fa-solid fa-coins text-4xl text-yellow-500 mb-4"></i>
-                  <h2 className="text-2xl font-bold text-white mb-8">מחשבון המרה</h2>
-                  
-                  <div className="space-y-6 max-w-xs mx-auto">
-                    <div className="flex gap-3">
-                      <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-4 text-white text-2xl font-bold text-center outline-none focus:border-blue-500 shadow-inner" dir="ltr" placeholder="0" />
-                      <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-24 bg-gray-900 border border-gray-700 rounded-xl p-2 text-white font-bold text-center outline-none focus:border-blue-500">
-                        <option value="ILS">₪ ILS</option>
-                        <option value="HUF">Ft HUF</option>
-                        <option value="EUR">€ EUR</option>
-                      </select>
-                    </div>
-                    
-                    <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="w-12 h-12 bg-blue-600 rounded-full mx-auto text-white flex items-center justify-center hover:bg-blue-500 active:scale-90 transition shadow-lg">
-                        <i className="fa-solid fa-arrow-right-arrow-left rotate-90 text-xl"></i>
-                    </button>
-                    
-                    <div className="flex gap-3">
-                      <div className="flex-1 bg-gray-900 border border-blue-500/30 rounded-xl p-4 text-center font-bold text-3xl text-blue-400 overflow-hidden shadow-inner flex items-center justify-center" dir="ltr">
-                        {convertCurrency()}
-                      </div>
-                      <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-24 bg-gray-900 border border-gray-700 rounded-xl p-2 text-white font-bold text-center outline-none focus:border-blue-500">
-                        <option value="HUF">Ft HUF</option>
-                        <option value="ILS">₪ ILS</option>
-                        <option value="EUR">€ EUR</option>
-                      </select>
-                    </div>
+              <div className="bg-black/80 border border-gray-800 rounded-2xl p-8 text-center shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-8">מחשבון המרה</h2>
+                <div className="space-y-6 max-w-xs mx-auto">
+                  <div className="flex gap-2">
+                    <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-4 text-white text-2xl font-bold text-center outline-none focus:border-blue-500" dir="ltr" />
+                    <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-20 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2">
+                      <option value="ILS">₪</option><option value="HUF">Ft</option><option value="EUR">€</option>
+                    </select>
+                  </div>
+                  <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="w-10 h-10 bg-blue-600 rounded-full mx-auto text-white flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-arrow-down-up-across-line"></i></button>
+                  <div className="flex gap-2">
+                    <div className="flex-1 bg-gray-900 border border-blue-500/30 rounded-xl p-4 text-3xl font-bold text-blue-400 flex items-center justify-center" dir="ltr">{convertCurrency()}</div>
+                    <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-20 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2">
+                      <option value="HUF">Ft</option><option value="ILS">₪</option><option value="EUR">€</option>
+                    </select>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* BARS TAB */}
             {activeTab === 'bars' && (
-              <div className="space-y-6 animate-in fade-in">
-                <div className="bg-black/60 border border-gray-800 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
-                  <h2 className="font-bold text-white mb-4 text-lg">חיפוש חופשי בעיר <i className="fa-brands fa-google text-blue-400 ml-1"></i></h2>
+              <div className="space-y-6">
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-6 shadow-lg">
+                  <h2 className="font-bold text-white mb-4">חיפוש חופשי בעיר <i className="fa-brands fa-google text-blue-400"></i></h2>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" placeholder="למשל: סופרמרקט, בית מרקחת..." 
-                      value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                      className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3.5 text-white outline-none focus:border-blue-500"
-                    />
-                    <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')} className="bg-blue-600 hover:bg-blue-500 px-5 rounded-xl text-white shadow-md transition active:scale-95"><i className="fa-solid fa-search text-lg"></i></button>
+                    <input type="text" placeholder="סופרמרקט, פארם..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500" />
+                    <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')} className="bg-blue-600 px-4 rounded-xl text-white active:scale-95 transition"><i className="fa-solid fa-search"></i></button>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-4">
-                    {['פאבים של רוק', 'חנויות גיטרות', 'סטארבקס', 'מסעדות'].map(tag => (
-                      <button key={tag} onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(tag + ' in Budapest')}`, '_blank')} className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-full text-xs font-medium text-gray-300 border border-gray-700 transition">{tag}</button>
+                    {['רוק ברים', 'גיטרות', 'סטארבקס', 'אוכל'].map(tag => (
+                      <button key={tag} onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(tag + ' Budapest')}`, '_blank')} className="bg-gray-800 px-3 py-1.5 rounded-full text-xs text-gray-300 border border-gray-700">{tag}</button>
                     ))}
                   </div>
                 </div>
-
                 <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2">מקומות מומלצים 🤘</h2>
+                  <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2">מומלצים</h2>
                   {CURATED_BARS.map(item => (
-                    <div key={item.name} className="bg-black/60 border border-gray-800 rounded-2xl p-5 flex justify-between items-center shadow-lg backdrop-blur-sm">
-                      <div>
-                        <h4 className="font-bold text-white text-lg">{item.name}</h4>
-                        <p className="text-xs text-gray-400 mt-1">{item.desc}</p>
-                      </div>
-                      <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Budapest')}`, '_blank')} className="text-white bg-gray-800 hover:bg-gray-700 w-12 h-12 rounded-xl flex items-center justify-center transition active:scale-90"><i className="fa-solid fa-location-dot text-xl text-red-500"></i></button>
+                    <div key={item.name} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
+                      <div><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400">{item.desc}</p></div>
+                      <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Budapest')}`, '_blank')} className="text-red-500 bg-gray-800 w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-location-dot"></i></button>
                     </div>
                   ))}
                 </div>
@@ -465,7 +374,6 @@
 
           </main>
 
-          {/* Navigation Bar */}
           <nav className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50">
             <div className="max-w-lg mx-auto flex justify-between px-2 py-2 mb-safe">
               {[
@@ -475,13 +383,9 @@
                 { id: 'currency', icon: 'fa-money-bill-transfer', label: 'המרה' },
                 { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
               ].map(tab => (
-                <button 
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)} 
-                  className={`flex flex-col items-center justify-center w-full py-2 rounded-xl transition-all ${activeTab === tab.id ? 'text-blue-400 bg-blue-900/20 shadow-inner scale-105' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                  <i className={`fa-solid ${tab.icon} text-xl mb-1.5`}></i>
-                  <span className="text-[11px] font-bold">{tab.label}</span>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center justify-center w-full py-2 rounded-xl transition-all ${activeTab === tab.id ? 'text-blue-400 bg-blue-900/20' : 'text-gray-500'}`}>
+                  <i className={`fa-solid ${tab.icon} text-xl mb-1`}></i>
+                  <span className="text-[10px] font-bold">{tab.label}</span>
                 </button>
               ))}
             </div>
@@ -491,19 +395,7 @@
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    );
+    root.render(<ErrorBoundary><App /></ErrorBoundary>);
   </script>
-
-  <script>
-    // Global error listener to catch Babel compilation errors if any
-    window.addEventListener('error', function(e) {
-      if (e.message.includes('React') || e.message.includes('Babel') || e.message.includes('Unexpected')) {
-        document.getElementById('startup-error').style.display = 'block';
-        document.getElementById('
-
-
-```
+</body>
+</html>
