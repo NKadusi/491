@@ -222,7 +222,7 @@
                   <p className="text-[11px] text-blue-200"><i className="fa-solid fa-bolt text-yellow-400 mr-1"></i> ראדאר המשלחת</p>
                 </div>
               </div>
-              {!user?.isAnonymous && (
+              {(!user || user.isAnonymous) ? (
                 <button onClick={() => signOut(auth)} className="text-blue-300 p-2"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
               )}
             </div>
