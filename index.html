@@ -95,25 +95,54 @@
     const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
     const DEADLINE = new Date('2060-06-11T18:00:00+03:00'); // זמן נעילת התחרות
-    const METALLICA_SONGS = [
-      "Enter Sandman", "Master of Puppets", "Nothing Else Matters", "One",
-      "Seek & Destroy", "For Whom the Bell Tolls", "Fade to Black",
-      "Sad But True", "Creeping Death", "Battery", "Blackened",
-      "Welcome Home (Sanitarium)", "The Unforgiven", "Wherever I May Roam",
-      "Harvester of Sorrow", "Fuel", "The Memory Remains", "Moth Into Flame",
-      "Spit Out the Bone", "Hardwired", "Lux Æterna", "Screaming Suicide",
-      "If Darkness Had a Son", "72 Seasons", "Too Far Gone?", "Shadows Follow",
-      "Orion", "The Call of Ktulu", "Ride the Lightning", "Whiplash",
-      "Hit the Lights", "No Remorse", "Motorbreath", "Metal Militia",
-      "Fight Fire with Fire", "Trapped Under Ice", "Escape", "Disposable Heroes",
-      "Leper Messiah", "Damage, Inc.", "Eye of the Beholder", "The Shortest Straw",
-      "Dyers Eve", "Holier Than Thou", "Don't Tread on Me", "Through the Never",
-      "Of Wolf and Man", "The God That Failed", "My Friend of Misery", "The Struggle Within",
-      "Until It Sleeps", "King Nothing", "Hero of the Day", "Bleeding Me",
-      "Whiskey in the Jar", "Am I Evil?", "Turn the Page", "Die, Die My Darling",
-      "The Unforgiven II", "The Unforgiven III", "St. Anger", "Frantic",
-      "The Day That Never Comes", "All Nightmare Long", "Cyanide"
-    ].sort();
+    
+    // רשימת שירים מקובצת לפי אלבומים (כרונולוגית)
+    const METALLICA_ALBUMS = [
+      {
+        title: "Kill 'Em All (1983)",
+        songs: ["Hit the Lights", "Motorbreath", "Whiplash", "No Remorse", "Seek & Destroy", "Metal Militia"]
+      },
+      {
+        title: "Ride the Lightning (1984)",
+        songs: ["Fight Fire with Fire", "Ride the Lightning", "For Whom the Bell Tolls", "Fade to Black", "Trapped Under Ice", "Escape", "Creeping Death", "The Call of Ktulu"]
+      },
+      {
+        title: "Master of Puppets (1986)",
+        songs: ["Battery", "Master of Puppets", "Welcome Home (Sanitarium)", "Disposable Heroes", "Leper Messiah", "Orion", "Damage, Inc."]
+      },
+      {
+        title: "...And Justice for All (1988)",
+        songs: ["Blackened", "Eye of the Beholder", "One", "The Shortest Straw", "Harvester of Sorrow", "Dyers Eve"]
+      },
+      {
+        title: "Metallica / The Black Album (1991)",
+        songs: ["Enter Sandman", "Sad But True", "Holier Than Thou", "The Unforgiven", "Wherever I May Roam", "Don't Tread on Me", "Through the Never", "Nothing Else Matters", "Of Wolf and Man", "The God That Failed", "My Friend of Misery", "The Struggle Within"]
+      },
+      {
+        title: "Load / Reload (1996-1997)",
+        songs: ["Until It Sleeps", "King Nothing", "Hero of the Day", "Bleeding Me", "Fuel", "The Memory Remains", "The Unforgiven II"]
+      },
+      {
+        title: "Garage Inc. (1998)",
+        songs: ["Turn the Page", "Whiskey in the Jar", "Am I Evil?", "Die, Die My Darling"]
+      },
+      {
+        title: "St. Anger (2003)",
+        songs: ["Frantic", "St. Anger"]
+      },
+      {
+        title: "Death Magnetic (2008)",
+        songs: ["The Day That Never Comes", "All Nightmare Long", "Cyanide", "The Unforgiven III"]
+      },
+      {
+        title: "Hardwired... to Self-Destruct (2016)",
+        songs: ["Hardwired", "Moth Into Flame", "Spit Out the Bone"]
+      },
+      {
+        title: "72 Seasons (2023)",
+        songs: ["72 Seasons", "Shadows Follow", "Screaming Suicide", "Lux Æterna", "If Darkness Had a Son", "Too Far Gone?"]
+      }
+    ];
 
     const PLACES = [
       { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-400' },
@@ -661,26 +690,44 @@
                       dir="ltr"
                     />
 
-                    <div className="flex-1 overflow-y-auto space-y-2 pb-safe">
-                      {METALLICA_SONGS.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase())).map(song => {
-                        const isSelected = myPrediction.includes(song);
+                    <div className="flex-1 overflow-y-auto space-y-4 pb-safe relative">
+                      {METALLICA_ALBUMS.map(album => {
+                        // סינון שירים בתוך האלבום לפי חיפוש
+                        const filteredSongs = album.songs.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase()));
+                        
+                        // אם אין שירים תואמים באלבום הזה, אל תציג אותו בכלל
+                        if (filteredSongs.length === 0) return null;
+
                         return (
-                          <button 
-                            key={song}
-                            onClick={() => {
-                              const newPred = [...myPrediction];
-                              newPred[showSongPicker] = song;
-                              setMyPrediction(newPred);
-                              setShowSongPicker(null);
-                              setSongSearchLocal('');
-                            }}
-                            className={`w-full text-left p-4 rounded-xl border transition flex justify-between items-center ${isSelected ? 'bg-gray-800 border-gray-700 opacity-50 cursor-not-allowed' : 'bg-black/60 border-purple-900/30 hover:bg-purple-900/40 text-white active:scale-95'}`}
-                            disabled={isSelected}
-                            dir="ltr"
-                          >
-                            <span className="font-medium">{song}</span>
-                            {isSelected && <i className="fa-solid fa-check text-green-500"></i>}
-                          </button>
+                          <div key={album.title} className="mb-2">
+                            <h4 className="text-purple-400 font-bold mb-3 text-sm sticky top-0 bg-black/95 py-2 z-10 border-b border-purple-900/50 flex items-center gap-2" dir="ltr">
+                              <i className="fa-solid fa-compact-disc text-purple-600"></i>
+                              {album.title}
+                            </h4>
+                            <div className="space-y-2 pl-2 border-l border-gray-800 ml-2">
+                              {filteredSongs.map(song => {
+                                const isSelected = myPrediction.includes(song);
+                                return (
+                                  <button 
+                                    key={song}
+                                    onClick={() => {
+                                      const newPred = [...myPrediction];
+                                      newPred[showSongPicker] = song;
+                                      setMyPrediction(newPred);
+                                      setShowSongPicker(null);
+                                      setSongSearchLocal('');
+                                    }}
+                                    className={`w-full text-left p-3 rounded-xl border transition flex justify-between items-center ${isSelected ? 'bg-gray-800 border-gray-700 opacity-50 cursor-not-allowed' : 'bg-black/60 border-purple-900/30 hover:bg-purple-900/40 text-white active:scale-95'}`}
+                                    disabled={isSelected}
+                                    dir="ltr"
+                                  >
+                                    <span className="font-medium text-sm">{song}</span>
+                                    {isSelected && <i className="fa-solid fa-check text-green-500"></i>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
