@@ -222,7 +222,7 @@
                   <p className="text-[11px] text-blue-200"><i className="fa-solid fa-bolt text-yellow-400 mr-1"></i> ראדאר המשלחת</p>
                 </div>
               </div>
-              {(!user || user.isAnonymous) ? (
+              {!user?.isAnonymous && user && (
                 <button onClick={() => signOut(auth)} className="text-blue-300 p-2"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
               )}
             </div>
@@ -233,7 +233,7 @@
             {activeTab === 'friends' && (
               <div className="space-y-5">
                 <div className="bg-black/60 border border-blue-900/50 rounded-2xl p-6 shadow-xl">
-                  {user?.isAnonymous ? (
+                  {(!user || user.isAnonymous) ? (
                     <div className="text-center space-y-4">
                       <h2 className="text-xl font-bold text-white">איפה כולם באצטדיון?</h2>
                       <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3">
@@ -399,3 +399,4 @@
   </script>
 </body>
 </html>
+ 
