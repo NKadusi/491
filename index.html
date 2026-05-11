@@ -5,17 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
   
-  <!-- תגיות PWA לאייפון (iOS) ואנדרואיד -->
+  <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Metallica HU">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#0a0a0a">
-  
-  <!-- קישור לקובץ המניפסט (חשוב לאנדרואיד) -->
   <link rel="manifest" href="./manifest.json">
-  
-  <!-- אייקון לאייפון (כשמוסיפים למסך הבית) -->
   <link rel="apple-touch-icon" href="./logo.jpg">
   <link rel="icon" type="image/jpeg" href="./logo.jpg">
 
@@ -205,7 +201,6 @@
     }
 
     function App() {
-      // קריאת הלשונית משורת הכתובת (URL) - מאפשר קישור ישיר למשחק
       const initialTab = new URLSearchParams(window.location.search).get('tab') || 'friends';
       
       const [activeTab, setActiveTab] = useState(initialTab);
@@ -303,18 +298,13 @@
         return onSnapshot(setlistRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
-            
-            // תמיכה בהעתק-הדבק: פיצול טקסט לפי פסיקים או שורות חדשות וניקוי מספרים אוטומטי
             if (data.list && typeof data.list === 'string') {
                const parsedSongs = data.list
-                 .split(/[\r\n,]+/) // מפצל לפי שורה חדשה או פסיק
-                 .map(s => s.trim().replace(/^\d+[\.\-)]\s*/, '')) // מנקה רווחים, ומסיר מספרים בתחילת שורה (כמו "1. ")
-                 .filter(Boolean); // מסנן שורות ריקות
-                 
+                 .split(/[\r\n,]+/)
+                 .map(s => s.trim().replace(/^\d+[\.\-)]\s*/, ''))
+                 .filter(Boolean);
                setOfficialSetlist(parsedSongs);
-            } 
-            // תמיכה לאחור בשיטת המערך
-            else if (data.songs && Array.isArray(data.songs)) {
+            } else if (data.songs && Array.isArray(data.songs)) {
                setOfficialSetlist(data.songs);
             } else {
                setOfficialSetlist(null);
@@ -344,35 +334,26 @@
         }
       }, [useGps]);
 
-      // חישוב מנוע הדירוג - Leaderboard (חוקים: 5 נק' על בול, 2 נק' על חלקי)
+      // חישוב מנוע הדירוג - Leaderboard
       const leaderboard = useMemo(() => {
         if (!officialSetlist || allPredictions.length === 0) return [];
-
         return allPredictions.map(pred => {
           let score = 0;
           let exactMatches = 0;
           let partialMatches = 0;
-
           const userSongs = pred.selected_songs || [];
-
           userSongs.forEach((song, idx) => {
             if (!song) return;
             if (song === officialSetlist[idx]) {
-              score += 5;       // מיקום מדויק
+              score += 5;
               exactMatches += 1;
             } else if (officialSetlist.includes(song)) {
-              score += 2;       // שיר נכון אבל מיקום אחר
+              score += 2;
               partialMatches += 1;
             }
           });
-
-          return {
-             ...pred,
-             score,
-             exactMatches,
-             partialMatches
-          };
-        }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches); // מיון לפי ניקוד, שובר שוויון: כמות "בולים"
+          return { ...pred, score, exactMatches, partialMatches };
+        }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
 
       const handleGoogleLogin = async () => {
@@ -394,7 +375,6 @@
         window.location.reload(); 
       };
 
-      // הפונקציה שסופרת את הלחיצות על הלוגו
       const handleLogoClick = () => {
         setSecretClicks(prev => {
           const next = prev + 1;
@@ -407,7 +387,6 @@
         });
       };
 
-      // שמירת הסטליסט לשרת
       const handlePublishSetlist = async () => {
         if (!adminInput.trim() || !user) return;
         setIsSaving(true);
@@ -516,6 +495,7 @@
             </div>
           )}
 
+          {/* --- Header מעודכן עם צבעי דגל הונגריה וללא סמל/ראדאר משלחת --- */}
           <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -531,7 +511,6 @@
                     CHAPTER 491 GOES TO<br className="sm:hidden"/> 
                     <span className="text-red-500">BUD</span><span className="text-white">AP</span><span className="text-green-500">EST</span>
                   </h1>
-                  <p className="text-[11px] text-blue-200"><i className="fa-solid fa-bolt text-yellow-400 mr-1"></i> ראדאר המשלחת</p>
                 </div>
               </div>
               {!user?.isAnonymous && user && (
@@ -1017,7 +996,7 @@
           <nav className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50 overflow-x-auto scrollbar-hide">
             <div className="max-w-lg mx-auto flex justify-between px-1 py-2 mb-safe min-w-max md:min-w-0">
               {[
-                { id: 'friends', icon: 'fa-street-view', label: 'ראדאר' },
+                { id: 'friends', icon: 'fa-street-view', label: 'רדאר' },
                 { id: 'takeover', icon: 'fa-meteor', label: 'Takeover' },
                 { id: 'game', icon: 'fa-clipboard-list', label: 'ניחושים', highlight: true }, // Highlight
                 { id: 'map', icon: 'fa-map-location-dot', label: 'מפות' },
