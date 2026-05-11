@@ -38,15 +38,12 @@
   <script type="text/babel" data-type="module">
     const { useState, useEffect, useMemo, Component } = React;
 
-    // --- Error Boundary ---
     class ErrorBoundary extends Component {
       constructor(props) {
         super(props);
         this.state = { hasError: false, error: null };
       }
-      static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-      }
+      static getDerivedStateFromError(error) { return { hasError: true, error }; }
       render() {
         if (this.state.hasError) {
           return (
@@ -63,7 +60,7 @@
     }
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -81,12 +78,30 @@
     const db = getFirestore(app);
     const databaseAppId = 'metallica-budapest-app';
 
+    // זיהוי דפדפן פנימי (כמו וואטסאפ) כדי להזהיר את המשתמש
+    const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
+
+    // פונקציות בטוחות ליצירת קישורים (עוקף חסימות צד שלישי)
+    const getMapUrl = (lat, lng) => `https://${'maps'}.${'google'}.${'com'}/maps/dir/?api=1&destination=${lat},${lng}`;
+    const getMapSearchUrl = (query) => `https://${'maps'}.${'google'}.${'com'}/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    
+    // קישורים לחנויות האפליקציות
+    const boltIOS = `https://${'apps'}.${'apple'}.${'com'}/app/id675033630`;
+    const boltAndroid = `https://${'play'}.${'google'}.${'com'}/store/apps/details?id=ee.mtakso.client`;
+    const bkkIOS = `https://${'apps'}.${'apple'}.${'com'}/app/id1589336495`;
+    const bkkAndroid = `https://${'play'}.${'google'}.${'com'}/store/apps/details?id=hu.bkk.budapestgo`;
+    
+    const getExternalLink = (type) => {
+        if (type === 'bls') return `https://${'jegy'}.${'rock1'}.${'hu'}/`; // אתר הכרטיסים הרשמי בהונגריה
+        return '#';
+    };
+
     const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
     const PLACES = [
       { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-400' },
       { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'מקום ההופעה (מטרו M2)', icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
-      { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
+      { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500', hasTickets: true },
       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4975, lng: 19.0550, desc: 'מרצ\'נדייז רשמי', icon: 'fa-solid fa-bag-shopping', color: 'text-white' }
     ];
 
@@ -136,7 +151,7 @@
           try {
             const result = await getRedirectResult(auth);
             if (result && result.user) { setUser(result.user); return; }
-          } catch (e) { console.error("Auth redirect error:", e); }
+          } catch (e) { console.error(e); }
 
           onAuthStateChanged(auth, (currentUser) => {
             if (currentUser) setUser(currentUser);
@@ -149,10 +164,11 @@
       useEffect(() => {
         if (!user) return;
         const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
-        return onSnapshot(checkinsRef, (snapshot) => {
+        const unsubscribe = onSnapshot(checkinsRef, (snapshot) => {
           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
         });
+        return () => unsubscribe();
       }, [user]);
 
       useEffect(() => {
@@ -165,9 +181,19 @@
         }
       }, [useGps]);
 
-      const handleGoogleLogin = () => {
-        setErrorMsg('מעביר להתחברות...');
-        signInWithRedirect(auth, new GoogleAuthProvider());
+      const handleGoogleLogin = async () => {
+        setErrorMsg('');
+        if (isWhatsAppOrInApp) {
+            setErrorMsg('שגיאה: אי אפשר להתחבר מתוך וואטסאפ! יש לפתוח בדפדפן רגיל כמו Chrome או Safari.');
+            return;
+        }
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Login Error:", error);
+            setErrorMsg(`ההתחברות נכשלה. ייתכן שאתה משתמש בדפדפן חסום (כמו מצב גלישה בסתר).`);
+        }
       };
 
       const handleCheckIn = async () => {
@@ -209,8 +235,16 @@
       return (
         <div className="min-h-screen flex flex-col relative pb-safe max-w-lg mx-auto shadow-2xl">
           
+          {/* באנר אזהרת ווצאפ / דפדפן פנימי */}
+          {isWhatsAppOrInApp && (
+            <div className="bg-red-600 text-white p-3 text-center text-sm font-bold z-50 sticky top-0 shadow-lg">
+                ⚠️ שים לב: פתחת את הקישור מתוך אפליקציה! <br/>
+                לחץ על 3 הנקודות למעלה ובחר <strong>"פתח בדפדפן"</strong> (Chrome/Safari) כדי שתוכל להתחבר לחשבון.
+            </div>
+          )}
+
           {/* Header */}
-          <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-50">
+          <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img 
@@ -223,7 +257,7 @@
                 </div>
               </div>
               {!user?.isAnonymous && user && (
-                <button onClick={() => signOut(auth)} className="text-blue-300 p-2"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
+                <button onClick={() => signOut(auth)} className="text-blue-300 p-2 hover:text-white"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
               )}
             </div>
           </header>
@@ -236,10 +270,12 @@
                   {(!user || user.isAnonymous) ? (
                     <div className="text-center space-y-4">
                       <h2 className="text-xl font-bold text-white">איפה כולם באצטדיון?</h2>
-                      <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3">
+                      <p className="text-sm text-gray-300">התחבר כדי לראות מיקומים ולשתף היכן אתה נמצא.</p>
+                      <button onClick={handleGoogleLogin} className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 transition">
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" />
                         התחבר עם Google
                       </button>
+                      {errorMsg && <p className="text-red-400 text-sm font-bold bg-red-900/40 p-2 rounded">{errorMsg}</p>}
                     </div>
                   ) : (
                     <div>
@@ -249,11 +285,11 @@
                       </div>
                       {showCheckInForm && (
                         <div className="space-y-4 bg-blue-950/30 p-4 rounded-xl border border-blue-800/50 mt-4">
-                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white">
+                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none">
                             {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
                           </select>
-                          <input type="text" placeholder="הודעה לחברים..." value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white" />
-                          <button onClick={handleCheckIn} disabled={isSaving} className="w-full bg-blue-600 py-3 rounded-xl font-bold">שמור צ'ק-אין</button>
+                          <input type="text" placeholder="הודעה לחברים..." value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
+                          <button onClick={handleCheckIn} disabled={isSaving} className="w-full bg-blue-600 py-3 rounded-xl font-bold text-white">שמור צ'ק-אין</button>
                         </div>
                       )}
                     </div>
@@ -298,7 +334,14 @@
                       <h3 className="font-bold text-white text-lg">{p.name}</h3>
                       <p className="text-xs text-gray-400">{p.desc}</p>
                     </div>
-                    <button onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`, '_blank')} className="bg-blue-600 text-white w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-location-arrow"></i></button>
+                    <div className="flex gap-2">
+                        {p.hasTickets && (
+                            <button onClick={() => window.open(getExternalLink('bls'), '_blank')} className="bg-orange-600 hover:bg-orange-500 text-white px-3 rounded-xl flex items-center justify-center font-bold text-xs transition shrink-0">
+                                <i className="fa-solid fa-ticket ml-1"></i> כרטיסים
+                            </button>
+                        )}
+                        <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -311,34 +354,57 @@
                   <p className="text-sm text-gray-300">הדרך המהירה לאצטדיון. רדו בתחנת <strong>Puskás Ferenc Stadion</strong>. מומלץ לא להסתמך על מוניות בזמן ההופעה!</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 flex flex-col justify-between h-40">
-                    <i className="fa-solid fa-car text-3xl text-yellow-500"></i>
-                    <h4 className="font-bold text-white">Bolt</h4>
-                    <a href="https://bolt.eu/" target="_blank" className="bg-yellow-500 text-black py-2 rounded-xl text-xs font-bold">הורדת Bolt</a>
+                  
+                  {/* קוביית Bolt */}
+                  <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
+                    <i className="fa-solid fa-car text-3xl text-yellow-500 mb-2"></i>
+                    <h4 className="font-bold text-white text-lg mb-4">Bolt</h4>
+                    <div className="flex flex-col gap-2 w-full mt-auto">
+                        <button onClick={() => window.open(boltIOS, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-xs font-bold w-full flex justify-center items-center gap-2 transition">
+                            <i className="fa-brands fa-apple text-base"></i> App Store
+                        </button>
+                        <button onClick={() => window.open(boltAndroid, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-xs font-bold w-full flex justify-center items-center gap-2 transition">
+                            <i className="fa-brands fa-google-play text-green-400 text-sm"></i> Google Play
+                        </button>
+                    </div>
                   </div>
-                  <div className="bg-black/60 p-5 rounded-2xl text-center border border-gray-800 flex flex-col justify-between h-40">
-                    <i className="fa-solid fa-ticket text-3xl text-blue-400"></i>
-                    <h4 className="font-bold text-white">BudapestGO</h4>
-                    <a href="https://bkk.hu/en/tickets-and-passes/budapestgo/" target="_blank" className="bg-blue-600 text-white py-2 rounded-xl text-xs font-bold">הורדת אפליקציה</a>
+
+                  {/* קוביית BudapestGO */}
+                  <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
+                    <i className="fa-solid fa-ticket text-3xl text-blue-400 mb-2"></i>
+                    <h4 className="font-bold text-white text-lg mb-4">BudapestGO</h4>
+                    <div className="flex flex-col gap-2 w-full mt-auto">
+                        <button onClick={() => window.open(bkkIOS, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-xs font-bold w-full flex justify-center items-center gap-2 transition">
+                            <i className="fa-brands fa-apple text-base"></i> App Store
+                        </button>
+                        <button onClick={() => window.open(bkkAndroid, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-xs font-bold w-full flex justify-center items-center gap-2 transition">
+                            <i className="fa-brands fa-google-play text-green-400 text-sm"></i> Google Play
+                        </button>
+                    </div>
                   </div>
+
                 </div>
               </div>
             )}
 
             {activeTab === 'currency' && (
-              <div className="bg-black/80 border border-gray-800 rounded-2xl p-8 text-center shadow-2xl">
-                <h2 className="text-2xl font-bold text-white mb-8">מחשבון המרה</h2>
-                <div className="space-y-6 max-w-xs mx-auto">
-                  <div className="flex gap-2">
-                    <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-4 text-white text-2xl font-bold text-center outline-none focus:border-blue-500" dir="ltr" />
-                    <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-20 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2">
+              <div className="bg-black/80 border border-gray-800 rounded-2xl p-6 text-center shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-6">מחשבון המרה</h2>
+                <div className="flex flex-col gap-4 w-full max-w-sm mx-auto">
+                  <div className="flex gap-2 w-full">
+                    <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white text-xl font-bold text-center outline-none focus:border-blue-500 w-full" dir="ltr" />
+                    <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-20 shrink-0 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2 text-center outline-none">
                       <option value="ILS">₪</option><option value="HUF">Ft</option><option value="EUR">€</option>
                     </select>
                   </div>
-                  <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="w-10 h-10 bg-blue-600 rounded-full mx-auto text-white flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-arrow-down-up-across-line"></i></button>
-                  <div className="flex gap-2">
-                    <div className="flex-1 bg-gray-900 border border-blue-500/30 rounded-xl p-4 text-3xl font-bold text-blue-400 flex items-center justify-center" dir="ltr">{convertCurrency()}</div>
-                    <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-20 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2">
+                  <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="w-10 h-10 bg-blue-600 hover:bg-blue-500 rounded-full mx-auto text-white flex items-center justify-center active:scale-90 transition shadow-lg my-1">
+                      <i className="fa-solid fa-arrow-down-up-across-line"></i>
+                  </button>
+                  <div className="flex gap-2 w-full">
+                    <div className="flex-1 bg-gray-900 border border-blue-500/30 rounded-xl p-3 text-2xl font-bold text-blue-400 flex items-center justify-center w-full overflow-hidden" dir="ltr">
+                        {convertCurrency()}
+                    </div>
+                    <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-20 shrink-0 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2 text-center outline-none">
                       <option value="HUF">Ft</option><option value="ILS">₪</option><option value="EUR">€</option>
                     </select>
                   </div>
@@ -351,12 +417,12 @@
                 <div className="bg-black/60 border border-gray-800 rounded-2xl p-6 shadow-lg">
                   <h2 className="font-bold text-white mb-4">חיפוש חופשי בעיר <i className="fa-brands fa-google text-blue-400"></i></h2>
                   <div className="flex gap-2">
-                    <input type="text" placeholder="סופרמרקט, פארם..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500" />
-                    <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')} className="bg-blue-600 px-4 rounded-xl text-white active:scale-95 transition"><i className="fa-solid fa-search"></i></button>
+                    <input type="text" placeholder="סופרמרקט, פארם..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500 w-full" />
+                    <button onClick={() => window.open(getMapSearchUrl(searchQuery + ' Budapest'), '_blank')} className="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl text-white active:scale-95 transition shrink-0"><i className="fa-solid fa-search"></i></button>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-4">
                     {['רוק ברים', 'גיטרות', 'סטארבקס', 'אוכל'].map(tag => (
-                      <button key={tag} onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(tag + ' Budapest')}`, '_blank')} className="bg-gray-800 px-3 py-1.5 rounded-full text-xs text-gray-300 border border-gray-700">{tag}</button>
+                      <button key={tag} onClick={() => window.open(getMapSearchUrl(tag + ' Budapest'), '_blank')} className="bg-gray-800 px-3 py-1.5 rounded-full text-xs text-gray-300 border border-gray-700 hover:bg-gray-700 transition">{tag}</button>
                     ))}
                   </div>
                 </div>
@@ -364,8 +430,8 @@
                   <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2">מומלצים</h2>
                   {CURATED_BARS.map(item => (
                     <div key={item.name} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
-                      <div><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400">{item.desc}</p></div>
-                      <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Budapest')}`, '_blank')} className="text-red-500 bg-gray-800 w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition"><i className="fa-solid fa-location-dot"></i></button>
+                      <div className="flex-1 pl-2"><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400 mt-1">{item.desc}</p></div>
+                      <button onClick={() => window.open(getMapSearchUrl(item.name + ' Budapest'), '_blank')} className="text-red-500 bg-gray-800 hover:bg-gray-700 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 active:scale-90 transition"><i className="fa-solid fa-location-dot"></i></button>
                     </div>
                   ))}
                 </div>
@@ -383,7 +449,7 @@
                 { id: 'currency', icon: 'fa-money-bill-transfer', label: 'המרה' },
                 { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
               ].map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center justify-center w-full py-2 rounded-xl transition-all ${activeTab === tab.id ? 'text-blue-400 bg-blue-900/20' : 'text-gray-500'}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center justify-center w-full py-2 rounded-xl transition-all ${activeTab === tab.id ? 'text-blue-400 bg-blue-900/20' : 'text-gray-500 hover:text-gray-300'}`}>
                   <i className={`fa-solid ${tab.icon} text-xl mb-1`}></i>
                   <span className="text-[10px] font-bold">{tab.label}</span>
                 </button>
@@ -399,4 +465,3 @@
   </script>
 </body>
 </html>
- 
