@@ -94,7 +94,7 @@
 
     const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
-    const DEADLINE = new Date('2060-06-11T18:00:00+03:00'); // זמן נעילת התחרות
+    const DEADLINE = new Date('2024-05-26T18:00:00+03:00'); // זמן נעילת התחרות
     
     // רשימת שירים מקובצת לפי אלבומים (כרונולוגית)
     const METALLICA_ALBUMS = [
@@ -204,12 +204,17 @@
       const [fromCurrency, setFromCurrency] = useState('ILS');
       const [toCurrency, setToCurrency] = useState('HUF');
       
-      // מצבי התחרות
+      // מצבי התחרות (Game State)
       const [myPrediction, setMyPrediction] = useState(Array(16).fill(""));
       const [showSongPicker, setShowSongPicker] = useState(null);
       const [songSearchLocal, setSongSearchLocal] = useState('');
       const [isLocked, setIsLocked] = useState(false);
       const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+      const [timeLeftStr, setTimeLeftStr] = useState('');
+      
+      // מצב לטבלת מובילים אחרי הופעה
+      const [officialSetlist, setOfficialSetlist] = useState(null);
+      const [allPredictions, setAllPredictions] = useState([]);
 
       useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -219,10 +224,35 @@
         return () => unsubscribe();
       }, []);
 
+      // מנגנון ספירה לאחור ונעילה אוטומטית
       useEffect(() => {
-        setIsLocked(new Date() > DEADLINE);
+        const checkTime = () => {
+          const now = new Date().getTime();
+          const distance = DEADLINE.getTime() - now;
+
+          if (distance < 0) {
+            setIsLocked(true);
+            setTimeLeftStr('התחרות ננעלה!');
+          } else {
+            setIsLocked(false);
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            let timeString = '';
+            if (days > 0) timeString += `${days} ימים, `;
+            timeString += `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            setTimeLeftStr(timeString);
+          }
+        };
+
+        checkTime();
+        const timer = setInterval(checkTime, 1000);
+        return () => clearInterval(timer);
       }, []);
 
+      // טעינת צ'ק-אינים
       useEffect(() => {
         if (!user) return;
         const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
@@ -232,7 +262,7 @@
         });
       }, [user]);
 
-      // טעינת הניחושים הקיימים של המשתמש
+      // טעינת הניחושים הקיימים של המשתמש בלבד
       useEffect(() => {
         if (!user || user.isAnonymous) return;
         const predRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions', user.uid);
@@ -243,6 +273,27 @@
         });
       }, [user]);
 
+      // האזנה לסטליסט הרשמי (יופעל אחרי ההופעה)
+      useEffect(() => {
+        const setlistRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist');
+        return onSnapshot(setlistRef, (docSnap) => {
+          if (docSnap.exists() && docSnap.data().songs) {
+            setOfficialSetlist(docSnap.data().songs);
+          } else {
+            setOfficialSetlist(null);
+          }
+        });
+      }, []);
+
+      // טעינת כל הניחושים של כולם (לצורך חישוב הדירוג)
+      useEffect(() => {
+        const predsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions');
+        return onSnapshot(predsRef, (snapshot) => {
+           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+           setAllPredictions(data);
+        });
+      }, []);
+
       useEffect(() => {
         if (useGps && navigator.geolocation) {
           const watchId = navigator.geolocation.watchPosition(
@@ -252,6 +303,37 @@
           return () => navigator.geolocation.clearWatch(watchId);
         }
       }, [useGps]);
+
+      // חישוב מנוע הדירוג - Leaderboard (חוקים: 5 נק' על בול, 2 נק' על חלקי)
+      const leaderboard = useMemo(() => {
+        if (!officialSetlist || allPredictions.length === 0) return [];
+
+        return allPredictions.map(pred => {
+          let score = 0;
+          let exactMatches = 0;
+          let partialMatches = 0;
+
+          const userSongs = pred.selected_songs || [];
+
+          userSongs.forEach((song, idx) => {
+            if (!song) return;
+            if (song === officialSetlist[idx]) {
+              score += 5;       // מיקום מדויק
+              exactMatches += 1;
+            } else if (officialSetlist.includes(song)) {
+              score += 2;       // שיר נכון אבל מיקום אחר
+              partialMatches += 1;
+            }
+          });
+
+          return {
+             ...pred,
+             score,
+             exactMatches,
+             partialMatches
+          };
+        }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches); // מיון לפי ניקוד, שובר שוויון: כמות "בולים"
+      }, [officialSetlist, allPredictions]);
 
       const handleGoogleLogin = async () => {
         setErrorMsg('');
@@ -615,63 +697,112 @@
 
             {activeTab === 'game' && (
               <div className="space-y-4 animate-in fade-in">
-                <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-800/50 rounded-2xl p-6 shadow-xl">
-                  <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                    <i className="fa-solid fa-clipboard-list text-purple-400"></i>
-                    תחרות הסטליסט
-                  </h2>
-                  <p className="text-sm text-gray-300 mb-4">
-                    נחשו אילו 16 שירים מטאליקה ינגנו בהופעה! בחרו את השירים שלכם למטה וזכו בתהילת עולם.
-                  </p>
-                  
-                  {isLocked && (
-                    <div className="bg-red-900/60 border border-red-500 text-white p-3 rounded-xl text-center font-bold mb-4">
-                      <i className="fa-solid fa-lock mr-2"></i> התחרות ננעלה! לא ניתן לשנות יותר את הבחירות.
+                {/* ===============================================
+                   מצב טבלת מובילים (מוצג רק כשיש סטליסט רשמי בשרת)
+                   =============================================== 
+                */}
+                {officialSetlist ? (
+                  <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 border border-yellow-800/50 rounded-2xl p-6 shadow-xl text-center">
+                    <h2 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center justify-center gap-2">
+                      <i className="fa-solid fa-trophy text-yellow-500"></i>
+                      תוצאות תחרות הסטליסט!
+                    </h2>
+                    <p className="text-sm text-gray-300 mb-4">
+                      הסטליסט הרשמי פורסם! הנה דירוג המנחשים של המשלחת:
+                    </p>
+                    <div className="text-[10px] sm:text-xs bg-black/40 p-2 rounded-lg inline-block text-gray-400 mb-6">
+                      בול בפגיעה (מיקום נכון) = <strong className="text-yellow-500">5 נק'</strong> | שיר נכון במיקום אחר = <strong className="text-blue-400">2 נק'</strong>
                     </div>
-                  )}
 
-                  {(!user || user.isAnonymous) ? (
-                    <div className="text-center bg-black/50 p-4 rounded-xl">
-                      <p className="text-sm text-gray-300 mb-3">יש להתחבר כדי להשתתף בתחרות הניחושים.</p>
-                      <button onClick={handleGoogleLogin} className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 rounded-xl transition inline-flex items-center gap-2">
-                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
-                         התחבר עם Google
-                      </button>
+                    <div className="space-y-3">
+                      {leaderboard.map((u, idx) => (
+                        <div key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-yellow-900/40 border-yellow-500' : idx === 1 ? 'bg-gray-400/20 border-gray-400/50' : idx === 2 ? 'bg-orange-900/30 border-orange-700/50' : 'bg-black/50 border-gray-800'}`}>
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 ${idx === 0 ? 'bg-yellow-500 text-black text-lg' : idx === 1 ? 'bg-gray-400 text-black' : idx === 2 ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
+                              {idx + 1}
+                           </div>
+                           <div className="flex-1 text-right text-sm overflow-hidden">
+                              <div className="font-bold text-white truncate">{u.name}</div>
+                              <div className="text-[10px] text-gray-400">
+                                {u.exactMatches} בולים, {u.partialMatches} חלקיים
+                              </div>
+                           </div>
+                           <div className="text-xl font-bold text-white shrink-0">
+                              {u.score}
+                              <span className="text-[10px] text-gray-500 ml-1">נק'</span>
+                           </div>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <div className="space-y-3 pb-8">
-                      {saveSuccessMsg && <div className="bg-green-600/80 border border-green-400 text-white p-3 rounded-xl text-center text-sm font-bold">{saveSuccessMsg}</div>}
-                      {errorMsg && <div className="bg-red-600/80 border border-red-400 text-white p-3 rounded-xl text-center text-sm font-bold">{errorMsg}</div>}
+                  </div>
+                ) : (
+                  /* ===============================================
+                   מצב ניחושים רגיל (מוצג לפני ההופעה)
+                   =============================================== 
+                  */
+                  <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-800/50 rounded-2xl p-6 shadow-xl">
+                    <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                      <i className="fa-solid fa-clipboard-list text-purple-400"></i>
+                      תחרות הסטליסט
+                    </h2>
+                    <p className="text-sm text-gray-300 mb-4">
+                      נחשו אילו 16 שירים מטאליקה ינגנו בהופעה! בחרו את השירים שלכם למטה וזכו בתהילת עולם.
+                    </p>
+                    
+                    {/* שעון ספירה לאחור */}
+                    <div className={`mb-6 p-3 rounded-xl border text-center font-bold shadow-lg transition-colors ${isLocked ? 'bg-red-900/60 border-red-500 text-red-200' : 'bg-purple-900/50 border-purple-500 text-purple-200'}`}>
+                      {isLocked ? (
+                        <><i className="fa-solid fa-lock mr-2 text-red-400"></i> התחרות ננעלה! לא ניתן לשנות בחירות.</>
+                      ) : (
+                        <>
+                          <div className="text-xs text-purple-300 mb-1">התחרות תינעל בעוד:</div>
+                          <div className="text-2xl tracking-wider" dir="ltr">{timeLeftStr}</div>
+                        </>
+                      )}
+                    </div>
 
-                      <div className="grid grid-cols-1 gap-2">
-                        {myPrediction.map((song, idx) => (
-                          <div key={idx} className="flex items-center gap-3 bg-black/40 border border-gray-700 p-2 rounded-xl shadow-inner">
-                            <div className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 font-bold shrink-0">{idx + 1}</div>
-                            <button 
-                              onClick={() => !isLocked && setShowSongPicker(idx)}
-                              disabled={isLocked}
-                              className={`flex-1 text-right text-sm px-3 py-2 rounded-lg transition border truncate ${song ? 'bg-blue-900/30 border-blue-800/50 text-white font-bold' : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'}`}
-                              dir="ltr"
-                            >
-                              <div className="text-left w-full truncate">{song || "Tap to select a song..."}</div>
-                            </button>
-                          </div>
-                        ))}
+                    {(!user || user.isAnonymous) ? (
+                      <div className="text-center bg-black/50 p-4 rounded-xl">
+                        <p className="text-sm text-gray-300 mb-3">יש להתחבר כדי להשתתף בתחרות הניחושים.</p>
+                        <button onClick={handleGoogleLogin} className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 rounded-xl transition inline-flex items-center gap-2">
+                           <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
+                           התחבר עם Google
+                        </button>
                       </div>
+                    ) : (
+                      <div className="space-y-3 pb-8">
+                        {saveSuccessMsg && <div className="bg-green-600/80 border border-green-400 text-white p-3 rounded-xl text-center text-sm font-bold">{saveSuccessMsg}</div>}
+                        {errorMsg && <div className="bg-red-600/80 border border-red-400 text-white p-3 rounded-xl text-center text-sm font-bold">{errorMsg}</div>}
 
-                      <button 
-                        onClick={handleSavePrediction}
-                        disabled={isLocked || isSaving}
-                        className={`w-full py-4 mt-4 rounded-xl font-bold text-lg shadow-lg flex justify-center items-center gap-2 transition ${isLocked ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white active:scale-95'}`}
-                      >
-                        {isSaving ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-save"></i>}
-                        שמור את הניחוש שלי
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {myPrediction.map((song, idx) => (
+                            <div key={idx} className="flex items-center gap-3 bg-black/40 border border-gray-700 p-2 rounded-xl shadow-inner">
+                              <div className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 font-bold shrink-0">{idx + 1}</div>
+                              <button 
+                                onClick={() => !isLocked && setShowSongPicker(idx)}
+                                disabled={isLocked}
+                                className={`flex-1 text-right text-sm px-3 py-2 rounded-lg transition border truncate ${song ? 'bg-blue-900/30 border-blue-800/50 text-white font-bold' : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'}`}
+                                dir="ltr"
+                              >
+                                <div className="text-left w-full truncate">{song || "Tap to select a song..."}</div>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
 
-                {/* Song Picker Modal */}
+                        <button 
+                          onClick={handleSavePrediction}
+                          disabled={isLocked || isSaving}
+                          className={`w-full py-4 mt-4 rounded-xl font-bold text-lg shadow-lg flex justify-center items-center gap-2 transition ${isLocked ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white active:scale-95'}`}
+                        >
+                          {isSaving ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-save"></i>}
+                          שמור את הניחוש שלי
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* מודאל בחירת השירים - נשאר זהה */}
                 {showSongPicker !== null && (
                   <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col p-4 backdrop-blur-md animate-in fade-in">
                     <div className="flex justify-between items-center mb-4 pt-safe">
@@ -692,10 +823,7 @@
 
                     <div className="flex-1 overflow-y-auto space-y-4 pb-safe relative">
                       {METALLICA_ALBUMS.map(album => {
-                        // סינון שירים בתוך האלבום לפי חיפוש
                         const filteredSongs = album.songs.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase()));
-                        
-                        // אם אין שירים תואמים באלבום הזה, אל תציג אותו בכלל
                         if (filteredSongs.length === 0) return null;
 
                         return (
