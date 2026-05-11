@@ -1,329 +1,423 @@
+```html
 <!DOCTYPE html>
-<html dir="rtl" lang="he">
+<html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chapter 491 Goes to Budapest</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chapter 491 Goes to Budapest</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <style>
-        body {
-            background-color: #111111;
-            color: #ffffff;
-            /* פתרון בעיית ההסתרה בנייד - מרווח תחתון קשיח */
-            padding-bottom: 120px !important; 
-        }
-        .lightning-glow {
-            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.8));
-        }
-        .bg-metallica-pattern {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95)), url('https://images.unsplash.com/photo-1598387181032-a3103a2db5b3?auto=format&fit=crop&q=80&w=1000');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-    </style>
+  <style>
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      -webkit-tap-highlight-color: transparent; 
+      background-color: #0a0a0a;
+      background-image: linear-gradient(rgba(10, 10, 10, 0.8), rgba(10, 10, 10, 0.95)), url('https://images.unsplash.com/photo-1540039155732-680f7498c5ee?q=80&w=2000&auto=format&fit=crop');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+    }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 120px) !important; }
+    .lightning-glow { filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.9)); }
+    ::-webkit-scrollbar { display: none; }
+  </style>
 </head>
-<body class="bg-metallica-pattern min-h-screen">
-    <div id="root"></div>
+<body class="text-neutral-200">
+  <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        // 1. ייבוא פיירבייס 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            GoogleAuthProvider, 
-            signInWithRedirect, 
-            getRedirectResult, 
-            signInAnonymously, 
-            signOut 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useMemo } = React;
 
-        // ==========================================
-        // ⚠️ חובה להדביק כאן את הגדרות הפיירבייס שלך! ⚠️
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY", // אמור להתחיל ב- AIzaSy...
-            authDomain: "goes-to-budapest.firebaseapp.com",
-            projectId: "goes-to-budapest",
-            storageBucket: "goes-to-budapest.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+    // --- הגדרות פיירבייס ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
+      authDomain: "goes-to-budapest.firebaseapp.com",
+      projectId: "goes-to-budapest",
+      storageBucket: "goes-to-budapest.firebasestorage.app",
+      messagingSenderId: "488923007392",
+      appId: "1:488923007392:web:8b657382aab11109a2bcc5",
+      measurementId: "G-4QXV4Q37KH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    let analytics = null;
+    try { analytics = getAnalytics(app); } catch (e) {}
+    const databaseAppId = 'metallica-budapest-app';
+
+    // --- נתונים קבועים ---
+    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
+    const HOTEL_COORDS = { lat: 47.5023, lng: 19.0531 };
+
+    const PLACES = [
+      { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-500' },
+      { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'כאן קורה הקסם (מטרו M2)', icon: 'fa-solid fa-music', color: 'text-red-500' },
+      { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
+      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4975, lng: 19.0550, desc: 'מרצ\'נדייז רשמי', icon: 'fa-solid fa-bag-shopping', color: 'text-gray-300' }
+    ];
+
+    const CURATED_BARS = [
+      { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם. חובה.' },
+      { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק ופרוע.' },
+      { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים.' }
+    ];
+
+    // --- Helpers ---
+    function calculateDistanceDetailed(lat1, lon1, lat2, lon2) {
+      if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+      const R = 6371; 
+      const dLat = (lat2 - lat1) * (Math.PI/180);
+      const dLon = (lon2 - lon1) * (Math.PI/180); 
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      const distKm = R * c; 
+      if (distKm < 1) return `${Math.round(distKm * 1000)} מטר ממך`;
+      return `${distKm.toFixed(1)} ק"מ ממך`;
+    }
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return '';
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'עכשיו';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `לפני ${minutes} דק'`;
+      return `לפני ${Math.floor(minutes/60)} שעות`;
+    }
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('friends');
+      const [user, setUser] = useState(null);
+      const [checkins, setCheckins] = useState([]);
+      const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
+      const [statusMessage, setStatusMessage] = useState('');
+      const [useGps, setUseGps] = useState(true);
+      const [isSaving, setIsSaving] = useState(false);
+      const [showCheckInForm, setShowCheckInForm] = useState(false);
+      const [errorMsg, setErrorMsg] = useState('');
+      const [myLocation, setMyLocation] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Currency State
+      const [exchangeAmount, setExchangeAmount] = useState(100);
+      const [fromCurrency, setFromCurrency] = useState('ILS');
+      const [toCurrency, setToCurrency] = useState('HUF');
+      const RATES = { ILS: 96.5, EUR: 395.0, HUF: 1 };
+
+      useEffect(() => {
+        const initAuth = async () => {
+          try {
+            const result = await getRedirectResult(auth);
+            if (result?.user) { setUser(result.user); return; }
+          } catch (e) { console.error(e); }
+
+          onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) setUser(currentUser);
+            else signInAnonymously(auth);
+          });
         };
+        initAuth();
+      }, []);
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const analytics = getAnalytics(app);
+      useEffect(() => {
+        if (!user) return;
+        const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
+        return onSnapshot(checkinsRef, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
+        });
+      }, [user]);
 
-        // --- הגדרות קבועות ---
-        const STADIUM_ZONES = [
-            "Snake Pit",
-            "פלטפורמה",
-            "דשא צמוד לבמה",
-            "יציע 100",
-            "יציע 200",
-            "יציע 300"
-        ];
-
-        const BARS_AND_ATTRACTIONS = [
-            { name: "BLS - Black Label Society (הופעה)", desc: "הופעת החימום הרשמית לפני מטאליקה", type: "music" },
-            { name: "Liquid Rock", desc: "פאב רוק מטאל מעולה בלב העיר", type: "bar" },
-            { name: "Rocktogon", desc: "מועדון רוק ופאב", type: "bar" },
-            { name: "Starbucks Deák Ferenc", desc: "סניף סטארבקס מרכזי", type: "coffee" }
-        ];
-
-        const HOTEL_NAME = "Mövenpick Hotel Budapest Centre";
-
-        function App() {
-            const [user, setUser] = React.useState(null);
-            const [errorMsg, setErrorMsg] = React.useState('');
-            const [activeTab, setActiveTab] = React.useState('radar');
-            
-            // סטייט עבור מחשבון המרה
-            const [amount, setAmount] = React.useState('');
-            const [fromCurrency, setFromCurrency] = React.useState('HUF');
-            const [toCurrency, setToCurrency] = React.useState('ILS');
-
-            // הפעלת מערכת ההתחברות (כולל חזרה מגוגל)
-            React.useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        const result = await getRedirectResult(auth);
-                        if (result?.user) {
-                            setUser(result.user);
-                            return; 
-                        }
-                    } catch (error) {
-                        console.error("Redirect Error:", error);
-                        setErrorMsg("שגיאה בסיום ההתחברות. נסה שוב.");
-                    }
-
-                    onAuthStateChanged(auth, (currentUser) => {
-                        if (currentUser) {
-                            setUser(currentUser);
-                        } else {
-                            signInAnonymously(auth).catch(err => {
-                                console.error("Anonymous auth failed:", err);
-                            });
-                        }
-                    });
-                };
-                initAuth();
-            }, []);
-
-            const handleGoogleLogin = async () => {
-                setErrorMsg('מעביר אותך לגוגל להמשך התחברות...');
-                try {
-                    const provider = new GoogleAuthProvider();
-                    await signInWithRedirect(auth, provider);
-                } catch (error) {
-                    console.error("Login Error:", error);
-                    setErrorMsg(`שגיאה: ${error.message}`);
-                }
-            };
-
-            const handleLogout = async () => {
-                await signOut(auth);
-                setUser(null);
-                setActiveTab('radar');
-            };
-
-            // פונקציות המרה
-            const convertCurrency = () => {
-                // שערים משוערים להמחשה (כדאי לעדכן ליום הטיסה)
-                const rates = { EUR: 1, ILS: 4.0, HUF: 390 };
-                if (!amount) return 0;
-                const baseEur = parseFloat(amount) / rates[fromCurrency];
-                const result = baseEur * rates[toCurrency];
-                return toCurrency === 'HUF' ? Math.round(result) : result.toFixed(2);
-            };
-
-            const swapCurrencies = () => {
-                setFromCurrency(toCurrency);
-                setToCurrency(fromCurrency);
-            };
-
-            return (
-                <div className="max-w-md mx-auto min-h-screen shadow-xl flex flex-col relative pb-8">
-                    {/* כותרת עליונה */}
-                    <header className="bg-gradient-to-b from-blue-900/90 to-black p-4 sticky top-0 z-50 border-b border-blue-500/50">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-blue-900/40 flex items-center justify-center border-2 border-blue-400 lightning-glow">
-                                <span className="text-2xl font-black italic tracking-tighter">M</span>
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold block sm:inline">Chapter 491 Goes to Budapest</h1>
-                                <p className="text-xs text-blue-300 flex items-center gap-1 mt-1">
-                                    <i data-lucide="zap" className="w-3 h-3"></i> Ride the Lightning
-                                </p>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* אזור תוכן מרכזי */}
-                    <main className="flex-1 p-4 overflow-y-auto">
-                        {errorMsg && (
-                            <div className="bg-red-900/80 border border-red-500 text-white font-medium p-3 rounded-lg mb-4 text-sm text-center">
-                                {errorMsg}
-                            </div>
-                        )}
-
-                        {/* לשונית ראדאר */}
-                        {activeTab === 'radar' && (
-                            <div className="space-y-5">
-                                {!user || user.isAnonymous ? (
-                                    <div className="bg-blue-900/30 p-6 rounded-2xl border border-blue-500/30 text-center shadow-lg backdrop-blur-md">
-                                        <i data-lucide="radar" className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-pulse"></i>
-                                        <h3 className="text-xl font-bold mb-2">ראדאר חברים חי</h3>
-                                        <p className="text-sm text-gray-300 mb-6 leading-relaxed">התחבר עם חשבון הגוגל שלך כדי לשתף את המיקום המדויק באצטדיון ולמצוא חברים סביבך.</p>
-                                        <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-200 transition-all active:scale-95 shadow-md">
-                                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-6 h-6" alt="Google" />
-                                            התחבר עם חשבון Google
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="bg-green-900/40 border border-green-500/50 p-4 rounded-xl text-center backdrop-blur-md flex justify-between items-center">
-                                        <div className="text-right">
-                                            <p className="text-xs text-green-300">מחובר בהצלחה</p>
-                                            <p className="text-white font-bold text-lg">{user.displayName}</p>
-                                        </div>
-                                        <button onClick={handleLogout} className="bg-red-900/50 hover:bg-red-800 text-red-200 px-4 py-2 rounded-lg text-sm font-medium transition">התנתק</button>
-                                    </div>
-                                )}
-                                
-                                <div className="mt-8">
-                                    <h3 className="font-bold text-xl mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
-                                        <i data-lucide="map" className="w-5 h-5 text-blue-400"></i> אזורי האצטדיון
-                                    </h3>
-                                    <div className="space-y-3">
-                                        {STADIUM_ZONES.map(zone => (
-                                            <div key={zone} className="bg-gray-800/80 p-4 rounded-xl flex justify-between items-center border border-gray-700 shadow-sm">
-                                                <span className="font-bold text-blue-100 text-lg">{zone}</span>
-                                                <span className="text-xs bg-blue-900/50 text-blue-200 border border-blue-700/50 px-3 py-1.5 rounded-full font-medium">התחבר כדי לצפות</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* לשונית מפות ומיקומים */}
-                        {activeTab === 'map' && (
-                            <div className="space-y-5">
-                                <div className="bg-blue-900/30 p-5 rounded-2xl border border-blue-500/40 shadow-lg backdrop-blur-md">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <i data-lucide="building" className="w-6 h-6 text-blue-400"></i>
-                                        <h3 className="font-bold text-xl text-blue-300">{HOTEL_NAME}</h3>
-                                    </div>
-                                    <p className="text-sm text-gray-300 mb-4">מלון המשלחת הרשמי</p>
-                                    <button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
-                                        <i data-lucide="navigation" className="w-5 h-5"></i> נווט למלון ב-Google Maps
-                                    </button>
-                                </div>
-
-                                <h3 className="font-bold text-xl mt-8 mb-4 border-b border-gray-700 pb-2 flex items-center gap-2">
-                                    <i data-lucide="beer" className="w-5 h-5 text-blue-400"></i> מוקדי עניין ובילויים
-                                </h3>
-                                <div className="space-y-4">
-                                    {BARS_AND_ATTRACTIONS.map((item, idx) => (
-                                        <div key={idx} className="bg-gray-800/80 p-5 rounded-xl border border-gray-700 shadow-md">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-bold text-white text-lg">{item.name}</h4>
-                                                <span className="text-xs px-2 py-1 bg-gray-700 rounded text-gray-300 font-medium">{item.type}</span>
-                                            </div>
-                                            <p className="text-sm text-gray-400 mb-4">{item.desc}</p>
-                                            <button className="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-2.5 rounded-lg text-sm transition flex justify-center items-center gap-2">
-                                                <i data-lucide="map-pin" className="w-4 h-4"></i> נווט לכאן
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* לשונית המרה */}
-                        {activeTab === 'converter' && (
-                            <div className="bg-gray-900/90 p-6 rounded-2xl border border-gray-700 shadow-2xl backdrop-blur-md">
-                                <div className="flex items-center justify-center gap-2 mb-6">
-                                    <i data-lucide="calculator" className="w-6 h-6 text-blue-400"></i>
-                                    <h3 className="font-bold text-2xl text-white">מחשבון המרה</h3>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 mb-6">
-                                    <select value={fromCurrency} onChange={(e) => setFromCurrency(e.target.value)} className="bg-gray-800 border border-gray-600 text-white p-3 rounded-xl flex-1 text-center font-bold outline-none focus:border-blue-500">
-                                        <option value="HUF">HUF (פורינט)</option>
-                                        <option value="ILS">ILS (שקל)</option>
-                                        <option value="EUR">EUR (אירו)</option>
-                                    </select>
-                                    
-                                    <button onClick={swapCurrencies} className="bg-blue-600 p-3 rounded-full hover:bg-blue-500 transition active:scale-90 shadow-md">
-                                        <i data-lucide="arrow-left-right" className="w-5 h-5 text-white"></i>
-                                    </button>
-
-                                    <select value={toCurrency} onChange={(e) => setToCurrency(e.target.value)} className="bg-gray-800 border border-gray-600 text-white p-3 rounded-xl flex-1 text-center font-bold outline-none focus:border-blue-500">
-                                        <option value="HUF">HUF (פורינט)</option>
-                                        <option value="ILS">ILS (שקל)</option>
-                                        <option value="EUR">EUR (אירו)</option>
-                                    </select>
-                                </div>
-
-                                <div className="mb-8">
-                                    <label className="block text-sm text-gray-400 mb-2 font-medium">הכנס סכום ({fromCurrency}):</label>
-                                    <input 
-                                        type="number" 
-                                        value={amount} 
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        className="w-full bg-gray-950 text-white text-3xl font-black p-4 rounded-xl border border-gray-700 text-center focus:outline-none focus:border-blue-500 transition shadow-inner"
-                                        placeholder="0"
-                                    />
-                                </div>
-
-                                <div className="bg-blue-900/40 p-5 rounded-xl text-center border border-blue-500/40 shadow-md">
-                                    <p className="text-sm text-blue-300 mb-2 font-medium">סך הכל ב-{toCurrency}:</p>
-                                    <p className="text-4xl font-black text-white tracking-wide" dir="ltr">
-                                        {amount ? convertCurrency() : '0.00'}
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    {/* ניווט תחתון (NavigationBar) */}
-                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-black/95 border-t border-gray-800 flex justify-around p-3 pb-safe z-50 backdrop-blur-xl">
-                        <button onClick={() => setActiveTab('radar')} className={`flex flex-col items-center gap-1.5 p-2 w-20 rounded-xl transition-all ${activeTab === 'radar' ? 'text-blue-400 bg-blue-900/30 shadow-inner' : 'text-gray-500 hover:text-gray-300'}`}>
-                            <i data-lucide="radar" className="w-6 h-6"></i>
-                            <span className="text-[11px] font-bold">ראדאר</span>
-                        </button>
-                        <button onClick={() => setActiveTab('map')} className={`flex flex-col items-center gap-1.5 p-2 w-20 rounded-xl transition-all ${activeTab === 'map' ? 'text-blue-400 bg-blue-900/30 shadow-inner' : 'text-gray-500 hover:text-gray-300'}`}>
-                            <i data-lucide="map-pin" className="w-6 h-6"></i>
-                            <span className="text-[11px] font-bold">מיקומים</span>
-                        </button>
-                        <button onClick={() => setActiveTab('converter')} className={`flex flex-col items-center gap-1.5 p-2 w-20 rounded-xl transition-all ${activeTab === 'converter' ? 'text-blue-400 bg-blue-900/30 shadow-inner' : 'text-gray-500 hover:text-gray-300'}`}>
-                            <i data-lucide="calculator" className="w-6 h-6"></i>
-                            <span className="text-[11px] font-bold">המרה</span>
-                        </button>
-                    </nav>
-                </div>
-            );
+      useEffect(() => {
+        if (useGps && navigator.geolocation) {
+          const watchId = navigator.geolocation.watchPosition(
+            (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            null, { enableHighAccuracy: true }
+          );
+          return () => navigator.geolocation.clearWatch(watchId);
         }
+      }, [useGps]);
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+      const handleGoogleLogin = () => {
+        setErrorMsg('מעביר לגוגל...');
+        signInWithRedirect(auth, new GoogleAuthProvider());
+      };
 
-        // אתחול האייקונים לאחר שהאפליקציה עולה
-        setTimeout(() => {
-            lucide.createIcons();
-        }, 100);
-    </script>
+      const handleCheckIn = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        let gps = null;
+        if (useGps) {
+          try {
+            const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+            gps = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          } catch (e) {}
+        }
+        await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
+          name: user.isAnonymous ? "אורח" : user.displayName,
+          photoURL: user.photoURL || "",
+          zone: selectedZone,
+          message: statusMessage,
+          timestamp: Date.now(),
+          userId: user.uid,
+          location: gps
+        });
+        setIsSaving(false);
+        setShowCheckInForm(false);
+      };
+
+      const convertedVal = useMemo(() => {
+        return ((exchangeAmount * RATES[fromCurrency]) / RATES[toCurrency]).toLocaleString('en-US', { 
+          maximumFractionDigits: toCurrency === 'HUF' ? 0 : 2 
+        });
+      }, [exchangeAmount, fromCurrency, toCurrency]);
+
+      const checkinsByZone = useMemo(() => {
+        const grouped = {};
+        STADIUM_ZONES.forEach(z => grouped[z] = []);
+        checkins.forEach(c => { if(grouped[c.zone]) grouped[c.zone].push(c); });
+        return grouped;
+      }, [checkins]);
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Header */}
+          <header className="bg-neutral-900/80 backdrop-blur-md border-b border-neutral-800 p-4 sticky top-0 z-50 shadow-lg">
+            <div className="max-w-2xl mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="https://scontent.ftlv6-1.fna.fbcdn.net/v/t39.30808-6/326804034_1124219691493080_4014716352676450050_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=1d70fc&oh=00_Af46iSC6rYn8ldlBXSQyNWEwX_7SJZsxRej7M2PoUzRz_w&oe=6A06D57A" 
+                  className="w-12 h-12 rounded-full border-2 border-blue-500 object-cover lightning-glow" 
+                  alt="Logo"
+                />
+                <div>
+                  <h1 className="text-lg font-bold text-white tracking-wider">CHAPTER 491 <span className="text-blue-500">BUDAPEST</span></h1>
+                  <p className="text-[10px] text-neutral-400">הראדאר של המשלחת הישראלית 🤘</p>
+                </div>
+              </div>
+              {!user?.isAnonymous && (
+                <button onClick={() => signOut(auth)} className="text-neutral-500 hover:text-white"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
+              )}
+            </div>
+          </header>
+
+          <main className="max-w-2xl mx-auto p-4 pb-safe flex-1 w-full">
+            
+            {/* RADAR TAB */}
+            {activeTab === 'friends' && (
+              <div className="space-y-4 animate-in fade-in">
+                <div className="bg-blue-900/10 border border-blue-900/30 rounded-xl p-5 shadow-lg">
+                  {user?.isAnonymous ? (
+                    <div className="text-center py-4 space-y-4">
+                      <h2 className="text-xl font-bold text-white">איפה כולם באצטדיון?</h2>
+                      <button onClick={handleGoogleLogin} className="w-full bg-white text-black font-bold py-3 rounded-lg flex items-center justify-center gap-3 shadow-lg">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" />
+                        התחבר עם גוגל
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="font-bold text-white text-lg">אהלן, {user.displayName}!</h2>
+                        <button onClick={() => setShowCheckInForm(true)} className="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">עדכן מיקום</button>
+                      </div>
+                      
+                      {showCheckInForm && (
+                        <div className="space-y-4 bg-neutral-900 p-4 rounded-lg border border-neutral-700 mb-4">
+                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-white">
+                            {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
+                          </select>
+                          <input type="text" placeholder="הודעה לחברים..." value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-white" />
+                          <div className="flex items-center gap-2 text-sm">
+                            <input type="checkbox" checked={useGps} onChange={e => setUseGps(e.target.checked)} />
+                            <span>שתף מרחק מדויק (GPS)</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={handleCheckIn} disabled={isSaving} className="flex-1 bg-blue-600 py-3 rounded-lg font-bold">בצע צ'ק-אין</button>
+                            <button onClick={() => setShowCheckInForm(false)} className="px-6 bg-neutral-700 py-3 rounded-lg">ביטול</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {STADIUM_ZONES.map(zone => {
+                    const zoneCheckins = checkinsByZone[zone];
+                    if (!zoneCheckins || zoneCheckins.length === 0) return null;
+                    return (
+                      <div key={zone} className="bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden">
+                        <div className="bg-neutral-800/50 px-4 py-2 flex justify-between items-center">
+                          <h4 className="font-bold text-sm text-blue-400">{zone}</h4>
+                          <span className="text-[10px] bg-neutral-950 px-2 py-1 rounded text-neutral-400">{zoneCheckins.length} חברים</span>
+                        </div>
+                        <div className="divide-y divide-neutral-800/30">
+                          {zoneCheckins.map(c => (
+                            <div key={c.id} className="p-3 flex gap-3 items-center">
+                              <img src={c.photoURL || 'https://placehold.co/100x100/171717/3b82f6?text=🤘'} className="w-10 h-10 rounded-full border border-neutral-700" />
+                              <div className="flex-1">
+                                <div className="flex justify-between">
+                                  <span className="font-bold text-sm">{c.name}</span>
+                                  <span className="text-[10px] text-neutral-500">{timeAgo(c.timestamp)}</span>
+                                </div>
+                                {c.message && <p className="text-xs text-neutral-400">{c.message}</p>}
+                                {c.location && myLocation && c.userId !== user?.uid && (
+                                  <div className="text-[10px] text-green-400 mt-1"><i className="fa-solid fa-location-arrow"></i> {calculateDistanceDetailed(myLocation.lat, myLocation.lng, c.location.lat, c.location.lng)}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* MAP TAB */}
+            {activeTab === 'map' && (
+              <div className="space-y-4 animate-in fade-in">
+                {PLACES.map(p => (
+                  <div key={p.id} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex gap-4 items-center">
+                    <div className={`w-12 h-12 rounded-full bg-neutral-950 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white">{p.name}</h3>
+                      <p className="text-xs text-neutral-400">{p.desc}</p>
+                    </div>
+                    <button onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`, '_blank')} className="bg-neutral-800 p-3 rounded-lg"><i className="fa-solid fa-map-location-dot"></i></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* TRANSPORT TAB */}
+            {activeTab === 'transport' && (
+              <div className="space-y-4 animate-in fade-in">
+                <div className="bg-red-900/10 border border-red-900/30 rounded-xl p-5">
+                  <h2 className="text-xl font-bold text-white mb-3">מטרו M2 (הקו האדום)</h2>
+                  <p className="text-sm text-neutral-300">הדרך הטובה ביותר לאצטדיון. רדו בתחנת <strong>Puskás Ferenc Stadion</strong>. אל תקחו מוניות לאזור!</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-neutral-900 p-4 rounded-xl text-center border border-neutral-800">
+                    <h4 className="font-bold mb-2">Bolt</h4>
+                    <p className="text-[10px] text-neutral-400 mb-3">אין Uber בבודפשט!</p>
+                    <a href="https://bolt.eu/" target="_blank" className="bg-yellow-600 text-black px-4 py-2 rounded-lg text-xs font-bold block">הורדת Bolt</a>
+                  </div>
+                  <div className="bg-neutral-900 p-4 rounded-xl text-center border border-neutral-800">
+                    <h4 className="font-bold mb-2">BudapestGO</h4>
+                    <p className="text-[10px] text-neutral-400 mb-3">כרטיסים דיגיטליים</p>
+                    <a href="https://bkk.hu/en/tickets-and-passes/budapestgo/" target="_blank" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold block">הורדת אפליקציה</a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CURRENCY TAB */}
+            {activeTab === 'currency' && (
+              <div className="space-y-4 animate-in fade-in">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-center shadow-lg">
+                  <h2 className="text-2xl font-bold text-white mb-6">מחשבון המרה</h2>
+                  <div className="space-y-4 max-w-xs mx-auto">
+                    <div className="flex gap-2">
+                      <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white text-left font-mono" dir="ltr" />
+                      <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-24 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white">
+                        <option value="ILS">ILS ₪</option>
+                        <option value="HUF">HUF Ft</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                    <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="text-neutral-500 hover:text-white transition"><i className="fa-solid fa-arrow-right-arrow-left rotate-90"></i></button>
+                    <div className="flex gap-2">
+                      <div className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-left font-mono font-bold text-xl text-blue-400 overflow-hidden">{convertedVal}</div>
+                      <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-24 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white">
+                        <option value="HUF">HUF Ft</option>
+                        <option value="ILS">ILS ₪</option>
+                        <option value="EUR">EUR €</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* BARS TAB */}
+            {activeTab === 'bars' && (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 shadow-lg">
+                  <h2 className="font-bold text-white mb-3">חיפוש חופשי בעיר</h2>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" placeholder="למשל: סופרמרקט, בית מרקחת..." 
+                      value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                      className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg p-3 text-white text-sm"
+                    />
+                    <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(searchQuery + ' Budapest')}`, '_blank')} className="bg-blue-600 px-4 rounded-lg"><i className="fa-solid fa-search"></i></button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {['פאבים של רוק', 'חנויות גיטרות', 'סטארבקס', 'מסעדות'].map(tag => (
+                      <button key={tag} onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(tag + ' in Budapest')}`, '_blank')} className="bg-neutral-800 px-3 py-1.5 rounded-full text-[10px] text-neutral-300 border border-neutral-700">{tag}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h2 className="text-xl font-bold text-white border-b border-neutral-800 pb-2">מקומות מומלצים 🤘</h2>
+                  {CURATED_BARS.map(item => (
+                    <div key={item.name} className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 flex justify-between items-center">
+                      <div><h4 className="font-bold">{item.name}</h4><p className="text-xs text-neutral-400">{item.desc}</p></div>
+                      <button onClick={() => window.open(`https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Budapest')}`, '_blank')} className="text-blue-400 p-2"><i className="fa-solid fa-location-dot text-xl"></i></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* Navigation Bar */}
+          <nav className="fixed bottom-0 left-0 right-0 bg-neutral-900/95 backdrop-blur-lg border-t border-neutral-800 z-50">
+            <div className="max-w-2xl mx-auto flex justify-between px-1 py-3">
+              {[
+                { id: 'friends', icon: 'fa-users', label: 'ראדאר' },
+                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות' },
+                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה' },
+                { id: 'currency', icon: 'fa-wallet', label: 'המרה' },
+                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
+              ].map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)} 
+                  className={`flex flex-col items-center justify-center w-full transition-all ${activeTab === tab.id ? 'text-blue-400 scale-110' : 'text-neutral-500'}`}
+                >
+                  <i className={`fa-solid ${tab.icon} text-xl mb-1`}></i>
+                  <span className="text-[10px] font-medium">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
+
+
+```
+ 
