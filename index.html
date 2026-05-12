@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
   
+  <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Metallica HU">
@@ -124,8 +125,14 @@
       { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500', hasTickets: true }
     ];
 
+    // לו"ז מעודכן לפי הפוסטר הרשמי, כולל קואורדינטות GPS לכל המקומות!
     const TAKEOVER_EVENTS = [
-       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Center\n10-13 ביוני: 08:30-20:00\n14 ביוני: 08:30-18:00", icon: 'fa-solid fa-bag-shopping', color: 'text-white' }
+      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall\n10-14 ביוני\n(שעות יימסרו בהמשך)", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
+      { id: 'blood', name: 'תרומת דם - הצלב האדום', type: 'charity', lat: 47.5028, lng: 19.1039, desc: "Budapest Aréna\n11 ביוני: 09:00-17:00\n12 ביוני: 09:00-19:00", icon: 'fa-solid fa-hand-holding-droplet', color: 'text-red-500' },
+      { id: 'film', name: 'פסטיבל סרטי מטאליקה', type: 'movie', lat: 47.4990, lng: 19.0967, desc: "Cinema City Aréna\n12 ביוני, 14:00\nCliff 'Em All / Cunning Stunts ועוד", icon: 'fa-solid fa-film', color: 'text-gray-300' },
+      { id: 'tribute', name: '...And Tributes for All!', type: 'concert', lat: 47.4526, lng: 19.0594, desc: "Barba Negra\n12 ביוני, 14:00-22:00\nמופעי מחווה למטאליקה, פנטרה וגוז'ירה", icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
+      { id: 'kirk', name: 'קירק האמט - The Collection', type: 'showcase', lat: 47.5135, lng: 19.0837, desc: "Magyar Zene Háza\n12 ביוני, 17:30\nשיחה פתוחה ותצוגת גיטרות מיוחדת", icon: 'fa-solid fa-guitar', color: 'text-green-400' },
+      { id: 'disco', name: 'Fuel For The Night', type: 'party', lat: 47.4981, lng: 19.0543, desc: "Akvárium Klub\n12 ביוני, 22:00\nמסיבת מטאליקה ומטאל לתוך הלילה", icon: 'fa-solid fa-compact-disc', color: 'text-purple-400' }
     ];
 
     const ADMINS = [
@@ -654,7 +661,7 @@
               <div className="space-y-4 animate-in fade-in">
                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-6 mb-6">
                   <h2 className="text-xl font-bold text-yellow-400 mb-2"><i className="fa-solid fa-meteor mr-2"></i>Metallica Takeover</h2>
-                  <p className="text-sm text-gray-300">ריכוז האירועים הרשמיים, חנויות הפופ-אפ, מסיבות ופעילויות בעיר סביב ההופעות.</p>
+                  <p className="text-sm text-gray-300">ריכוז האירועים הרשמיים סביב ההופעות (מעודכן לפי פרסומי הלהקה).</p>
                 </div>
                 
                 {TAKEOVER_EVENTS.map(p => (
@@ -663,7 +670,7 @@
                     <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
                     <div className="flex-1">
                       <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 whitespace-pre-line">{p.desc}</p>
+                      <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
