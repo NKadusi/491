@@ -101,7 +101,7 @@
     const bkkAndroid = `https://play.google.com/store/apps/details?id=hu.bkk.budapestgo`;
     const blsTickets = `https://jegy.rock1.hu/`;
 
-    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
+    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "פרנטיק (Frantic)", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
     const DEADLINE = new Date('2026-06-11T18:00:00+02:00'); 
     
@@ -159,17 +159,6 @@
       'other': { label: 'אחר 🎸', color: 'text-gray-300 bg-gray-800/50 border-gray-600/50' }
     };
 
-    function calculateDistanceDetailed(lat1, lon1, lat2, lon2) {
-      if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-      const R = 6371; 
-      const dLat = (lat2 - lat1) * (Math.PI/180);
-      const dLon = (lon2 - lon1) * (Math.PI/180); 
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2); 
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-      const distKm = R * c; 
-      return distKm < 1 ? `${Math.round(distKm * 1000)} מטר` : `${distKm.toFixed(1)} ק"מ`;
-    }
-
     function timeAgo(timestamp) {
       if (!timestamp) return '';
       const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -186,11 +175,9 @@
       const [checkins, setCheckins] = useState([]);
       const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
       const [statusMessage, setStatusMessage] = useState('');
-      const [useGps, setUseGps] = useState(true);
       const [isSaving, setIsSaving] = useState(false);
       const [showCheckInForm, setShowCheckInForm] = useState(false);
       const [errorMsg, setErrorMsg] = useState('');
-      const [myLocation, setMyLocation] = useState(null);
       const [searchQuery, setSearchQuery] = useState('');
       const [exchangeAmount, setExchangeAmount] = useState('100');
       const [fromCurrency, setFromCurrency] = useState('ILS');
@@ -305,16 +292,6 @@
         });
       }, []);
 
-      useEffect(() => {
-        if (useGps && navigator.geolocation) {
-          const watchId = navigator.geolocation.watchPosition(
-            (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            null, { enableHighAccuracy: true }
-          );
-          return () => navigator.geolocation.clearWatch(watchId);
-        }
-      }, [useGps]);
-
       const leaderboard = useMemo(() => {
         if (!officialSetlist || allPredictions.length === 0) return [];
         return allPredictions.map(pred => {
@@ -387,8 +364,6 @@
       const handleCheckIn = async () => {
         if (!user) return;
         setIsSaving(true);
-        let gps = null;
-        if (useGps && myLocation) gps = myLocation;
         try {
             await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
                 name: user.isAnonymous ? "אורח" : user.displayName,
@@ -396,8 +371,7 @@
                 zone: selectedZone,
                 message: statusMessage,
                 timestamp: Date.now(),
-                userId: user.uid,
-                location: gps
+                userId: user.uid
             });
             setShowCheckInForm(false);
             setStatusMessage('');
@@ -622,9 +596,6 @@
                             <div className="flex-1 text-sm">
                               <div className="flex justify-between font-bold text-white"><span>{c.name}</span><span className="text-[10px] text-gray-500">{timeAgo(c.timestamp)}</span></div>
                               {c.message && <p className="text-gray-400 text-xs mt-0.5">{c.message}</p>}
-                              {c.location && myLocation && c.userId !== user?.uid && (
-                                <div className="text-[10px] text-green-400 mt-1"><i className="fa-solid fa-location-arrow mr-1"></i> {calculateDistanceDetailed(myLocation.lat, myLocation.lng, c.location.lat, c.location.lng)}</div>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -1124,6 +1095,3 @@
   </script>
 </body>
 </html>
-
-
-```
