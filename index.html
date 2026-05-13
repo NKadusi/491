@@ -183,7 +183,7 @@
       const [fromCurrency, setFromCurrency] = useState('ILS');
       const [toCurrency, setToCurrency] = useState('HUF');
       
-      // --- הסטייט החדש לשערי המטבע המקוונים ---
+      // --- הסטייט לשערי המטבע המקוונים ---
       const [exchangeRates, setExchangeRates] = useState({ ILS: 1, EUR: 0.25, HUF: 98.0 });
       const [ratesStatus, setRatesStatus] = useState('מושך שערים מעודכנים...');
       
@@ -318,6 +318,7 @@
         });
       }, []);
 
+      // חזרנו לפונקציונליות מלאה וללא באגים - תוקן החיתוך בקוד!
       const leaderboard = useMemo(() => {
         if (!officialSetlist || allPredictions.length === 0) return [];
         return allPredictions.map(pred => {
@@ -329,6 +330,135 @@
             if (!song) return;
             if (song === officialSetlist[idx]) {
               score += 5;
+              exactMatches += 1;
+            } else if (officialSetlist.includes(song)) {
+              score += 2;
+              partialMatches += 1;
+            }
+          });
+          return { ...pred, score, exactMatches, partialMatches };
+        }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
+      }, [officialSetlist, allPredictions]);
+
+      const handleGoogleLogin = async () => {
+        setErrorMsg('');
+        if (isWhatsAppOrInApp) {
+            setErrorMsg('שגיאה: אי אפשר להתחבר מתוך וואטסאפ! פתח בדפדפן רגיל.');
+            return;
+        }
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            setErrorMsg(`ההתחברות נכשלה. וודא שאתה בדפדפן רגיל.`);
+        }
+      };
+
+      const handleLogout = async () => {
+        await signOut(auth);
+        window.location.reload(); 
+      };
+
+      const handleLogoClick = () => {
+        setSecretClicks(prev => {
+          const next = prev + 1;
+          if (next === 7) {
+            setIsAdmin(true);
+            setActiveTab('admin');
+            alert("ברוך הבא למצב מנהל! 🤘");
+          }
+          return next;
+        });
+      };
+
+      const handlePublishSetlist = async () => {
+        if (!adminInput.trim() || !user) return;
+        setIsSaving(true);
+        try {
+          await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist'), {
+            list: adminInput,
+            timestamp: Date.now()
+          });
+          alert("הסטליסט פורסם בהצלחה! טבלת המובילים התעדכנה לכולם.");
+          setAdminInput('');
+        } catch (e) {
+          console.error(e);
+          alert("שגיאת הרשאות! ודא שעדכנת את ה-Firebase Rules עם כתובת האימייל שלך.");
+        }
+        setIsSaving(false);
+      };
+
+      const handleCheckIn = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
+                name: user.isAnonymous ? "אורח" : user.displayName,
+                photoURL: user.photoURL || "",
+                zone: selectedZone,
+                message: statusMessage,
+                timestamp: Date.now(),
+                userId: user.uid
+            });
+            setShowCheckInForm(false);
+            setStatusMessage('');
+        } catch (e) { console.error(e); }
+        setIsSaving(false);
+      };
+
+      const handleDeleteLocation = async () => {
+        if (!user) return;
+        setIsSaving(true);
+        try {
+            await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid));
+            setShowCheckInForm(false);
+            setStatusMessage('');
+        } catch (e) { console.error(e); }
+        setIsSaving(false);
+      };
+
+      // הוספת נקודת בילוי ע"י המשתמש (UGC)
+      const handleAddCommunityBar = async () => {
+        if (!user || user.isAnonymous) {
+          alert("יש להתחבר כדי להוסיף המלצה.");
+          return;
+        }
+        if (!newBarName.trim()) {
+          alert("אנא הזן את שם המקום.");
+          return;
+        }
+        setIsSaving(true);
+        try {
+          await addDoc(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars'), {
+            name: newBarName,
+            desc: newBarDesc || "אין תיאור.",
+            category: newBarCategory,
+            addedBy: user.displayName || "אורח",
+            userId: user.uid,
+            timestamp: Date.now()
+          });
+          setNewBarName('');
+          setNewBarDesc('');
+          setNewBarCategory('nightlife');
+          setShowAddBarForm(false);
+        } catch (e) {
+          console.error(e);
+          alert("שגיאה בשמירת ההמלצה. ודא שעדכנת את חוקי האבטחה (Rules) בשרת.");
+        }
+        setIsSaving(false);
+      };
+
+      // מחיקת נקודת בילוי ע"י המחבר או אדמין
+      const handleDeleteCommunityBar = async (barId) => {
+        if (!window.confirm("בטוח שברצונך למחוק המלצה זו?")) return;
+        try {
+          await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars', barId));
+        } catch(e) {
+          console.error(e);
+          alert("שגיאת הרשאות! לא ניתן למחוק את ההמלצה.");
+        }
+      };
+
       const handleSavePrediction = async () => {
         if (isLocked) {
             setErrorMsg("התחרות ננעלה. לא ניתן לשמור ניחושים יותר.");
@@ -364,7 +494,7 @@
         setIsSaving(false);
       };
 
-      // --- מחיקה מלאה של הניחוש מהשרת ---
+      // מחיקה מלאה של הניחוש מהשרת
       const handleDeletePrediction = async () => {
         if (isLocked) return;
         if (!window.confirm("בטוח שברצונך למחוק את הניחוש לצמיתות? פעולה זו תסיר אותך מהתחרות.")) return;
@@ -669,7 +799,7 @@
                   ))}
                 </div>
 
-                {/* --- אזור חדש: המלצות הקהילה --- */}
+                {/* --- אזור המלצות הקהילה --- */}
                 <div className="space-y-4 pt-4 mt-6 border-t border-purple-900/50">
                   <div className="flex justify-between items-center mb-2">
                     <h2 className="text-lg font-bold text-purple-400">המלצות מהמשלחת (קהילה)</h2>
