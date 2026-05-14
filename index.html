@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Chapter 491 Goes to Budapest</title>
   
   <!-- PWA & Mobile Web App Tags -->
@@ -15,40 +15,161 @@
   <link rel="apple-touch-icon" href="./logo.jpg">
   <link rel="icon" type="image/jpeg" href="./logo.jpg">
 
+  <!-- טעינת עיצוב בצורה מאובטחת -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { corePlugins: { preflight: true } }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <!-- טעינת React -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    /* גיבוי קריטי למקרה שהעיצוב הראשי מתעכב */
     body { 
       font-family: system-ui, -apple-system, sans-serif; 
+      background-color: #0a0a0a !important; /* רקע שחור */
+      color: #f5f5f5 !important; /* טקסט לבן/אפור */
+      margin: 0;
+      overflow: hidden; 
       -webkit-tap-highlight-color: transparent; 
-      background-color: #0a0a0a;
-      background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95)), url('./wp.jpg');
-      background-size: cover;
-      background-attachment: fixed;
-      background-position: center;
     }
-    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 100px) !important; }
+    a { color: #60a5fa; text-decoration: none; }
+    
+    :root {
+      --header-height: 70px;
+      --nav-height: 75px;
+    }
+    
+    .app-bg {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.95)), url('./wp.jpg');
+      background-color: #0a0a0a;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+    }
+    
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      max-width: 500px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      padding-bottom: calc(var(--nav-height) + 2rem);
+      scrollbar-width: none;
+    }
+    main::-webkit-scrollbar { display: none; }
+    
     .lightning-glow { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.9)); }
-    /* Hide scrollbar for clean UI but allow scrolling */
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="text-neutral-200 min-h-screen">
+<body class="text-neutral-200">
   
-  <div id="startup-error" style="display:none; color:white; background:#ef4444; padding:20px; text-align:center; direction:rtl; font-weight:bold; z-index:9999; position:fixed; top:0; left:0; right:0;">
-    שגיאת מערכת: אנא נקה את מטמון הדפדפן ורענן את העמוד.
-  </div>
-
+  <div class="app-bg"></div>
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
     const { useState, useEffect, useMemo, Component } = React;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
+      authDomain: "goes-to-budapest.firebaseapp.com",
+      projectId: "goes-to-budapest",
+      storageBucket: "goes-to-budapest.firebasestorage.app",
+      messagingSenderId: "488923007392",
+      appId: "1:488923007392:web:8b657382aab11109a2bcc5",
+      measurementId: "G-4QXV4Q37KH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const databaseAppId = 'metallica-budapest-app';
+
+    const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
+    const getMapUrl = (lat, lng) => `https://maps.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    const getMapSearchUrl = (query) => `https://maps.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    
+    const boltIOS = `https://apps.apple.com/app/id675033630`;
+    const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
+    const bkkIOS = `https://apps.apple.com/app/id1589336495`;
+    const bkkAndroid = `https://play.google.com/store/apps/details?id=hu.bkk.budapestgo`;
+    const blsTickets = `https://jegy.rock1.hu/`;
+
+    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "פרנטיק (Frantic)", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
+    const DEADLINE = new Date('2026-06-11T18:00:00+02:00'); 
+    
+    const METALLICA_ALBUMS = [
+      { title: "Kill 'Em All (1983)", songs: ["Hit the Lights", "The Four Horsemen", "Motorbreath", "Jump in the Fire", "(Anesthesia) - Pulling Teeth", "Whiplash", "Phantom Lord", "No Remorse", "Seek & Destroy", "Metal Militia"] },
+      { title: "Ride the Lightning (1984)", songs: ["Fight Fire with Fire", "Ride the Lightning", "For Whom the Bell Tolls", "Fade to Black", "Trapped Under Ice", "Escape", "Creeping Death", "The Call of Ktulu"] },
+      { title: "Master of Puppets (1986)", songs: ["Battery", "Master of Puppets", "The Thing That Should Not Be", "Welcome Home (Sanitarium)", "Disposable Heroes", "Leper Messiah", "Orion", "Damage, Inc."] },
+      { title: "...And Justice for All (1988)", songs: ["Blackened", "...And Justice for All", "Eye of the Beholder", "One", "The Shortest Straw", "Harvester of Sorrow", "The Frayed Ends of Sanity", "To Live Is to Die", "Dyers Eve"] },
+      { title: "Metallica (1991)", songs: ["Enter Sandman", "Sad But True", "Holier Than Thou", "The Unforgiven", "Wherever I May Roam", "Don't Tread on Me", "Through the Never", "Nothing Else Matters", "Of Wolf and Man", "The God That Failed", "My Friend of Misery", "The Struggle Within"] },
+      { title: "Load / Reload", songs: ["Until It Sleeps", "King Nothing", "Hero of the Day", "Bleeding Me", "Fuel", "The Memory Remains", "The Unforgiven II", "Fixxxer"] },
+      { title: "Garage Inc. / S&M", songs: ["Turn the Page", "Whiskey in the Jar", "Die, Die My Darling", "No Leaf Clover"] },
+      { title: "Modern Era", songs: ["St. Anger", "Dirty Window", "Cyanide", "The Day That Never Comes", "Hardwired", "Moth Into Flame", "Spit Out the Bone"] },
+      { title: "72 Seasons (2023)", songs: ["72 Seasons", "Shadows Follow", "Screaming Suicide", "Lux Æterna", "If Darkness Had a Son", "Inamorata"] }
+    ];
+
+    // --- הלו"ז המעודכן מהפוסטר של ה-TAKEOVER ---
+    const TAKEOVER_EVENTS = [
+      { id: 'popup', name: 'חנות הפופ-אפ (Merchandise)', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall\n10-14 ביוני", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
+      { id: 'blood', name: 'תרומת דם - הצלב האדום', lat: 47.5028, lng: 19.1039, desc: "Budapest Aréna\n11 ביוני (09:00-17:00)\n12 ביוני (09:00-19:00)", icon: 'fa-solid fa-hand-holding-droplet', color: 'text-red-500' },
+      { id: 'film', name: 'פסטיבל סרטי מטאליקה', lat: 47.4990, lng: 19.0967, desc: "Cinema City Aréna\n12 ביוני, 14:00\nCliff 'Em All, Cunning Stunts ועוד", icon: 'fa-solid fa-film', color: 'text-gray-300' },
+      { id: 'tribute', name: '...And Tributes for All!', lat: 47.4526, lng: 19.0594, desc: "Barba Negra\n12 ביוני, 14:00 - 22:00\nלהקות מחווה: מטאליקה, גוז'ירה, פנטרה", icon: 'fa-solid fa-guitar', color: 'text-orange-500' },
+      { id: 'kirk', name: 'קירק האמט - The Collection', lat: 47.5135, lng: 19.0837, desc: "Magyar Zene Háza\n12 ביוני, 17:30\nשיחה פתוחה ותצוגת גיטרות", icon: 'fa-solid fa-book-open', color: 'text-blue-300' },
+      { id: 'disco', name: 'Fuel For The Night', lat: 47.4981, lng: 19.0543, desc: "Akvárium Klub\n12 ביוני, 22:00\nמסיבת מטאליקה ומטאל לתוך הלילה", icon: 'fa-solid fa-compact-disc', color: 'text-purple-400' }
+    ];
+
+    const ADMINS = [
+      { name: 'Alon Carmel', wa: '972544860380' },
+      { name: 'Doron Attias', wa: '972525830557' },
+      { name: 'Erez Carmel', wa: '972545300665' },
+      { name: 'Daniel Siegler', wa: '972508283060' },
+      { name: 'Dvir Olberg', wa: '972547704944' },
+      { name: 'Nir Ben-Yair', wa: '972526224472' }
+    ];
+
+    const CURATED_BARS = [
+      { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם.' },
+      { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק.' },
+      { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים.' }
+    ];
+
+    const POI_CATEGORIES = {
+      'nightlife': { label: 'חיי לילה 🍻', color: 'text-purple-300 bg-purple-900/30 border-purple-700/50' },
+      'food': { label: 'מסעדות 🍔', color: 'text-orange-300 bg-orange-900/30 border-orange-700/50' },
+      'culture': { label: 'תרבות 🏛️', color: 'text-blue-300 bg-blue-900/30 border-blue-700/50' },
+      'shopping': { label: 'קניות 🛍️', color: 'text-green-300 bg-green-900/30 border-green-700/50' },
+      'other': { label: 'אחר 🎸', color: 'text-gray-300 bg-gray-800/50 border-gray-600/50' }
+    };
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return '';
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'עכשיו';
+      const minutes = Math.floor(seconds / 60);
+      return minutes < 60 ? `לפני ${minutes} דק'` : `לפני ${Math.floor(minutes/60)} שע'`;
+    }
 
     class ErrorBoundary extends Component {
       constructor(props) {
@@ -71,142 +192,38 @@
       }
     }
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
-      authDomain: "goes-to-budapest.firebaseapp.com",
-      projectId: "goes-to-budapest",
-      storageBucket: "goes-to-budapest.firebasestorage.app",
-      messagingSenderId: "488923007392",
-      appId: "1:488923007392:web:8b657382aab11109a2bcc5",
-      measurementId: "G-4QXV4Q37KH"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const databaseAppId = 'metallica-budapest-app';
-
-    const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
-
-    const getMapUrl = (lat, lng) => `https://maps.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-    const getMapSearchUrl = (query) => `https://maps.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-    
-    const boltIOS = `https://apps.apple.com/app/id675033630`;
-    const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
-    const bkkIOS = `https://apps.apple.com/app/id1589336495`;
-    const bkkAndroid = `https://play.google.com/store/apps/details?id=hu.bkk.budapestgo`;
-    const blsTickets = `https://jegy.rock1.hu/`;
-
-    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "פרנטיק (Frantic)", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
-
-    const DEADLINE = new Date('2026-06-11T18:00:00+02:00'); 
-    
-    const METALLICA_ALBUMS = [
-      { title: "Kill 'Em All (1983)", songs: ["Hit the Lights", "The Four Horsemen", "Motorbreath", "Jump in the Fire", "(Anesthesia) - Pulling Teeth", "Whiplash", "Phantom Lord", "No Remorse", "Seek & Destroy", "Metal Militia"] },
-      { title: "Ride the Lightning (1984)", songs: ["Fight Fire with Fire", "Ride the Lightning", "For Whom the Bell Tolls", "Fade to Black", "Trapped Under Ice", "Escape", "Creeping Death", "The Call of Ktulu"] },
-      { title: "Master of Puppets (1986)", songs: ["Battery", "Master of Puppets", "The Thing That Should Not Be", "Welcome Home (Sanitarium)", "Disposable Heroes", "Leper Messiah", "Orion", "Damage, Inc."] },
-      { title: "...And Justice for All (1988)", songs: ["Blackened", "...And Justice for All", "Eye of the Beholder", "One", "The Shortest Straw", "Harvester of Sorrow", "The Frayed Ends of Sanity", "To Live Is to Die", "Dyers Eve"] },
-      { title: "Metallica / The Black Album (1991)", songs: ["Enter Sandman", "Sad But True", "Holier Than Thou", "The Unforgiven", "Wherever I May Roam", "Don't Tread on Me", "Through the Never", "Nothing Else Matters", "Of Wolf and Man", "The God That Failed", "My Friend of Misery", "The Struggle Within"] },
-      { title: "Load & Reload (1996-1997)", songs: ["Ain't My Bitch", "2 X 4", "The House Jack Built", "Until It Sleeps", "King Nothing", "Hero of the Day", "Bleeding Me", "Cure", "Poor Twisted Me", "Wasting My Hate", "Mama Said", "Thorn Within", "Ronnie", "The Outlaw Torn", "Fuel", "The Memory Remains", "Devil's Dance", "The Unforgiven II", "Better Than You", "Slither", "Carpe Diem Baby", "Bad Seed", "Where the Wild Things Are", "Prince Charming", "Low Man's Lyric", "Attitude", "Fixxxer"] },
-      { title: "Garage Inc. & S&M (1998-1999)", songs: ["Turn the Page", "Whiskey in the Jar", "Am I Evil?", "Die, Die My Darling", "Blitzkrieg", "Breadfan", "Stone Cold Crazy", "So What", "Mercyful Fate", "Astronomy", "No Leaf Clover", "-Human"] },
-      { title: "St. Anger (2003)", songs: ["Frantic", "St. Anger", "Some Kind of Monster", "Dirty Window", "Invisible Kid", "My World", "Shoot Me Again", "Sweet Amber", "The Unnamed Feeling", "Purify", "All Within My Hands"] },
-      { title: "Death Magnetic (2008)", songs: ["That Was Just Your Life", "The End of the Line", "Broken, Beat & Scarred", "The Day That Never Comes", "All Nightmare Long", "Cyanide", "The Unforgiven III", "The Judas Kiss", "Suicide & Redemption", "My Apocalypse"] },
-      { title: "Hardwired... to Self-Destruct (2016)", songs: ["Hardwired", "Atlas, Rise!", "Now That We're Dead", "Moth Into Flame", "Dream No More", "Halo on Fire", "Confusion", "ManUNkind", "Here Comes Revenge", "Am I Savage?", "Murder One", "Spit Out the Bone"] },
-      { title: "72 Seasons (2023)", songs: ["72 Seasons", "Shadows Follow", "Screaming Suicide", "Sleepwalk My Life Away", "You Must Burn!", "Lux Æterna", "Crown of Barbed Wire", "Chasing Light", "If Darkness Had a Son", "Too Far Gone?", "Room of Mirrors", "Inamorata"] }
-    ];
-
-    const PLACES = [
-      { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-400' },
-      { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'מקום ההופעה (מטרו M2)', icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
-      { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500', hasTickets: true }
-    ];
-
-    // לו"ז מעודכן לפי הפוסטר הרשמי, כולל קואורדינטות GPS לכל המקומות!
-    const TAKEOVER_EVENTS = [
-      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall\n10-14 ביוני\n(שעות יימסרו בהמשך)", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
-      { id: 'blood', name: 'תרומת דם - הצלב האדום', type: 'charity', lat: 47.5028, lng: 19.1039, desc: "Budapest Aréna\n11 ביוני: 09:00-17:00\n12 ביוני: 09:00-19:00", icon: 'fa-solid fa-hand-holding-droplet', color: 'text-red-500' },
-      { id: 'film', name: 'פסטיבל סרטי מטאליקה', type: 'movie', lat: 47.4990, lng: 19.0967, desc: "Cinema City Aréna\n12 ביוני, 14:00\nCliff 'Em All / Cunning Stunts ועוד", icon: 'fa-solid fa-film', color: 'text-gray-300' },
-      { id: 'tribute', name: '...And Tributes for All!', type: 'concert', lat: 47.4526, lng: 19.0594, desc: "Barba Negra\n12 ביוני, 14:00-22:00\nמופעי מחווה למטאליקה, פנטרה וגוז'ירה", icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
-      { id: 'kirk', name: 'קירק האמט - The Collection', type: 'showcase', lat: 47.5135, lng: 19.0837, desc: "Magyar Zene Háza\n12 ביוני, 17:30\nשיחה פתוחה ותצוגת גיטרות מיוחדת", icon: 'fa-solid fa-guitar', color: 'text-green-400' },
-      { id: 'disco', name: 'Fuel For The Night', type: 'party', lat: 47.4981, lng: 19.0543, desc: "Akvárium Klub\n12 ביוני, 22:00\nמסיבת מטאליקה ומטאל לתוך הלילה", icon: 'fa-solid fa-compact-disc', color: 'text-purple-400' }
-    ];
-
-    const ADMINS = [
-      { name: 'Alon Carmel', phone: '+972 54-486-0380', wa: '972544860380' },
-      { name: 'Doron Attias', phone: '+972 52-583-0557', wa: '972525830557' },
-      { name: 'Erez Carmel', phone: '+972 54-530-0665', wa: '972545300665' },
-      { name: 'Daniel Siegler', phone: '+972 50-828-3060', wa: '972508283060' },
-      { name: 'Dvir Olberg', phone: '+972 54-770-4944', wa: '972547704944' },
-      { name: 'Nir Ben-Yair', phone: '+972 52-622-4472', wa: '972526224472' }
-    ];
-
-    const CURATED_BARS = [
-      { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם.' },
-      { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק.' },
-      { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים.' }
-    ];
-
-    // קטגוריות לנקודות עניין של הקהילה
-    const POI_CATEGORIES = {
-      'nightlife': { label: 'חיי לילה 🍻', color: 'text-purple-300 bg-purple-900/30 border-purple-700/50' },
-      'food': { label: 'מסעדות 🍔', color: 'text-orange-300 bg-orange-900/30 border-orange-700/50' },
-      'culture': { label: 'תרבות 🏛️', color: 'text-blue-300 bg-blue-900/30 border-blue-700/50' },
-      'shopping': { label: 'קניות 🛍️', color: 'text-green-300 bg-green-900/30 border-green-700/50' },
-      'other': { label: 'אחר 🎸', color: 'text-gray-300 bg-gray-800/50 border-gray-600/50' }
-    };
-
-    function timeAgo(timestamp) {
-      if (!timestamp) return '';
-      const seconds = Math.floor((Date.now() - timestamp) / 1000);
-      if (seconds < 60) return 'עכשיו';
-      const minutes = Math.floor(seconds / 60);
-      return minutes < 60 ? `לפני ${minutes} דק'` : `לפני ${Math.floor(minutes/60)} שע'`;
-    }
-
     function App() {
-      const initialTab = new URLSearchParams(window.location.search).get('tab') || 'friends';
-      
-      const [activeTab, setActiveTab] = useState(initialTab);
+      const [activeTab, setActiveTab] = useState('friends');
       const [user, setUser] = useState(null);
       const [checkins, setCheckins] = useState([]);
+      const [communityBars, setCommunityBars] = useState([]);
+      
+      const [exchangeRates, setExchangeRates] = useState({ ILS: 1, EUR: 0.25, HUF: 98.0 });
+      const [ratesStatus, setRatesStatus] = useState('טוען שערים...');
+      
+      const [myPrediction, setMyPrediction] = useState(Array(16).fill(""));
+      const [officialSetlist, setOfficialSetlist] = useState(null);
+      const [allPredictions, setAllPredictions] = useState([]);
+      const [isLocked, setIsLocked] = useState(false);
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [secretClicks, setSecretClicks] = useState(0);
+
+      const [showCheckInForm, setShowCheckInForm] = useState(false);
+      const [showAddBarForm, setShowAddBarForm] = useState(false);
+      const [showSongPicker, setShowSongPicker] = useState(null);
+      const [isSaving, setIsSaving] = useState(false);
+      const [songSearchLocal, setSongSearchLocal] = useState('');
+      const [timeLeftStr, setTimeLeftStr] = useState('');
+
       const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
       const [statusMessage, setStatusMessage] = useState('');
-      const [isSaving, setIsSaving] = useState(false);
-      const [showCheckInForm, setShowCheckInForm] = useState(false);
-      const [errorMsg, setErrorMsg] = useState('');
       const [searchQuery, setSearchQuery] = useState('');
+      const [newBarName, setNewBarName] = useState('');
+      const [newBarDesc, setNewBarDesc] = useState('');
+      const [newBarCategory, setNewBarCategory] = useState('nightlife');
       const [exchangeAmount, setExchangeAmount] = useState('100');
       const [fromCurrency, setFromCurrency] = useState('ILS');
       const [toCurrency, setToCurrency] = useState('HUF');
-      
-      // --- הסטייט לשערי המטבע המקוונים ---
-      const [exchangeRates, setExchangeRates] = useState({ ILS: 1, EUR: 0.25, HUF: 98.0 });
-      const [ratesStatus, setRatesStatus] = useState('מושך שערים מעודכנים...');
-      
-      // מצבי התחרות 
-      const [myPrediction, setMyPrediction] = useState(Array(16).fill(""));
-      const [showSongPicker, setShowSongPicker] = useState(null);
-      const [songSearchLocal, setSongSearchLocal] = useState('');
-      const [isLocked, setIsLocked] = useState(false);
-      const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
-      const [timeLeftStr, setTimeLeftStr] = useState('');
-      const [officialSetlist, setOfficialSetlist] = useState(null);
-      const [allPredictions, setAllPredictions] = useState([]);
-
-      // מצבי קהילת בילויים (User Generated Content)
-      const [communityBars, setCommunityBars] = useState([]);
-      const [showAddBarForm, setShowAddBarForm] = useState(false);
-      const [newBarName, setNewBarName] = useState('');
-      const [newBarDesc, setNewBarDesc] = useState('');
-      const [newBarCategory, setNewBarCategory] = useState('nightlife'); // קטגוריה דיפולטיבית
-
-      // מצבי אדמין
-      const [secretClicks, setSecretClicks] = useState(0);
-      const [isAdmin, setIsAdmin] = useState(false);
       const [adminInput, setAdminInput] = useState('');
 
       useEffect(() => {
@@ -217,24 +234,16 @@
         return () => unsubscribe();
       }, []);
 
-      // --- משיכת שערי מטבע חיים (Live) מהאינטרנט ---
       useEffect(() => {
         const fetchRates = async () => {
           try {
             const res = await fetch('https://open.er-api.com/v6/latest/ILS');
             const data = await res.json();
-            if (data && data.rates) {
-              setExchangeRates({
-                ILS: 1,
-                HUF: data.rates.HUF,
-                EUR: data.rates.EUR
-              });
-              setRatesStatus('מעודכן בחיבור חי (Live) 🟢');
+            if (data?.rates) {
+              setExchangeRates({ ILS: 1, HUF: data.rates.HUF, EUR: data.rates.EUR });
+              setRatesStatus('מעודכן בחיבור חי 🟢');
             }
-          } catch (e) {
-            console.warn("Failed to fetch rates:", e);
-            setRatesStatus('שער משוער (ללא קליטה) 🔴');
-          }
+          } catch (e) { setRatesStatus('שער משוער (ללא קליטה) 🔴'); }
         };
         fetchRates();
       }, []);
@@ -265,354 +274,170 @@
 
       useEffect(() => {
         if (!user) return;
-        const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
-        return onSnapshot(checkinsRef, (snapshot) => {
-          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
+        const unsubCheck = onSnapshot(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins'), snap => {
+          setCheckins(snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.timestamp - a.timestamp));
         });
+        const unsubBars = onSnapshot(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars'), snap => {
+          setCommunityBars(snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => b.timestamp - a.timestamp));
+        });
+        const unsubSetlist = onSnapshot(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist'), d => {
+          if (d.exists()) setOfficialSetlist(d.data().list?.split(/[\r\n,]+/).map(s => s.trim().replace(/^\d+[\.\-)]\s*/, '')).filter(Boolean));
+        });
+        const unsubAllPreds = onSnapshot(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions'), snap => {
+          setAllPredictions(snap.docs.map(d => ({id: d.id, ...d.data()})));
+        });
+        return () => { unsubCheck(); unsubBars(); unsubSetlist(); unsubAllPreds(); };
       }, [user]);
-
-      // האזנה להמלצות הקהילה
-      useEffect(() => {
-        const barsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars');
-        return onSnapshot(barsRef, (snapshot) => {
-          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setCommunityBars(data.sort((a, b) => b.timestamp - a.timestamp));
-        });
-      }, []);
 
       useEffect(() => {
         if (!user || user.isAnonymous) return;
         const predRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions', user.uid);
-        return onSnapshot(predRef, (docSnap) => {
+        const unsub = onSnapshot(predRef, (docSnap) => {
           if (docSnap.exists() && docSnap.data().selected_songs) {
             setMyPrediction(docSnap.data().selected_songs);
           }
         });
+        return () => unsub();
       }, [user]);
 
-      useEffect(() => {
-        const setlistRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist');
-        return onSnapshot(setlistRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.list && typeof data.list === 'string') {
-               const parsedSongs = data.list.split(/[\r\n,]+/).map(s => s.trim().replace(/^\d+[\.\-)]\s*/, '')).filter(Boolean);
-               setOfficialSetlist(parsedSongs);
-            } else if (data.songs && Array.isArray(data.songs)) {
-               setOfficialSetlist(data.songs);
-            } else {
-               setOfficialSetlist(null);
-            }
-          } else {
-            setOfficialSetlist(null);
-          }
-        });
-      }, []);
-
-      useEffect(() => {
-        const predsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions');
-        return onSnapshot(predsRef, (snapshot) => {
-           const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-           setAllPredictions(data);
-        });
-      }, []);
-
-      // חזרנו לפונקציונליות מלאה וללא באגים - תוקן החיתוך בקוד!
-      const leaderboard = useMemo(() => {
-        if (!officialSetlist || allPredictions.length === 0) return [];
-        return allPredictions.map(pred => {
-          let score = 0;
-          let exactMatches = 0;
-          let partialMatches = 0;
-          const userSongs = pred.selected_songs || [];
-          userSongs.forEach((song, idx) => {
-            if (!song) return;
-            if (song === officialSetlist[idx]) {
-              score += 5;
-              exactMatches += 1;
-            } else if (officialSetlist.includes(song)) {
-              score += 2;
-              partialMatches += 1;
-            }
-          });
-          return { ...pred, score, exactMatches, partialMatches };
-        }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
-      }, [officialSetlist, allPredictions]);
-
-      const handleGoogleLogin = async () => {
-        setErrorMsg('');
-        if (isWhatsAppOrInApp) {
-            setErrorMsg('שגיאה: אי אפשר להתחבר מתוך וואטסאפ! פתח בדפדפן רגיל.');
-            return;
-        }
-        try {
-            const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            setErrorMsg(`ההתחברות נכשלה. וודא שאתה בדפדפן רגיל.`);
-        }
-      };
-
-      const handleLogout = async () => {
-        await signOut(auth);
-        window.location.reload(); 
-      };
-
       const handleLogoClick = () => {
-        setSecretClicks(prev => {
-          const next = prev + 1;
-          if (next === 7) {
-            setIsAdmin(true);
-            setActiveTab('admin');
-            alert("ברוך הבא למצב מנהל! 🤘");
-          }
-          return next;
-        });
-      };
-
-      const handlePublishSetlist = async () => {
-        if (!adminInput.trim() || !user) return;
-        setIsSaving(true);
-        try {
-          await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist'), {
-            list: adminInput,
-            timestamp: Date.now()
-          });
-          alert("הסטליסט פורסם בהצלחה! טבלת המובילים התעדכנה לכולם.");
-          setAdminInput('');
-        } catch (e) {
-          console.error(e);
-          alert("שגיאת הרשאות! ודא שעדכנת את ה-Firebase Rules עם כתובת האימייל שלך.");
-        }
-        setIsSaving(false);
+        const next = secretClicks + 1;
+        setSecretClicks(next);
+        if (next === 7) { setIsAdmin(true); setActiveTab('admin'); alert("מצב מנהל הופעל! 🤘"); }
       };
 
       const handleCheckIn = async () => {
-        if (!user) return;
         setIsSaving(true);
         try {
-            await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
-                name: user.isAnonymous ? "אורח" : user.displayName,
-                photoURL: user.photoURL || "",
-                zone: selectedZone,
-                message: statusMessage,
-                timestamp: Date.now(),
-                userId: user.uid
-            });
-            setShowCheckInForm(false);
-            setStatusMessage('');
-        } catch (e) { console.error(e); }
-        setIsSaving(false);
-      };
-
-      const handleDeleteLocation = async () => {
-        if (!user) return;
-        setIsSaving(true);
-        try {
-            await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid));
-            setShowCheckInForm(false);
-            setStatusMessage('');
-        } catch (e) { console.error(e); }
-        setIsSaving(false);
-      };
-
-      // הוספת נקודת בילוי ע"י המשתמש (UGC)
-      const handleAddCommunityBar = async () => {
-        if (!user || user.isAnonymous) {
-          alert("יש להתחבר כדי להוסיף המלצה.");
-          return;
-        }
-        if (!newBarName.trim()) {
-          alert("אנא הזן את שם המקום.");
-          return;
-        }
-        setIsSaving(true);
-        try {
-          await addDoc(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars'), {
-            name: newBarName,
-            desc: newBarDesc || "אין תיאור.",
-            category: newBarCategory,
-            addedBy: user.displayName || "אורח",
-            userId: user.uid,
-            timestamp: Date.now()
+          await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid), {
+            name: user.displayName || "אורח",
+            photoURL: user.photoURL || "",
+            zone: selectedZone, message: statusMessage, timestamp: Date.now(), userId: user.uid
           });
-          setNewBarName('');
-          setNewBarDesc('');
-          setNewBarCategory('nightlife');
-          setShowAddBarForm(false);
-        } catch (e) {
-          console.error(e);
-          alert("שגיאה בשמירת ההמלצה. ודא שעדכנת את חוקי האבטחה (Rules) בשרת.");
-        }
+          setShowCheckInForm(false);
+          setStatusMessage('');
+        } catch(e) {}
         setIsSaving(false);
-      };
-
-      // מחיקת נקודת בילוי ע"י המחבר או אדמין
-      const handleDeleteCommunityBar = async (barId) => {
-        if (!window.confirm("בטוח שברצונך למחוק המלצה זו?")) return;
-        try {
-          await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars', barId));
-        } catch(e) {
-          console.error(e);
-          alert("שגיאת הרשאות! לא ניתן למחוק את ההמלצה.");
-        }
       };
 
       const handleSavePrediction = async () => {
-        if (isLocked) {
-            setErrorMsg("התחרות ננעלה. לא ניתן לשמור ניחושים יותר.");
-            return;
-        }
-        if (myPrediction.includes("")) {
-            setErrorMsg("יש לבחור בדיוק 16 שירים לפני השמירה.");
-            return;
-        }
+        if (isLocked) { alert("התחרות ננעלה. לא ניתן לשמור ניחושים יותר."); return; }
+        if (myPrediction.includes("")) { alert("יש לבחור בדיוק 16 שירים לפני השמירה."); return; }
         if (!user || user.isAnonymous) return;
-        
         setIsSaving(true);
-        setErrorMsg('');
-        setSaveSuccessMsg('');
         try {
             await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions', user.uid), {
-                name: user.displayName || "אורח",
-                email: user.email || "",
-                userId: user.uid,
-                selected_songs: myPrediction,
-                timestamp: Date.now()
+                name: user.displayName || "אורח", email: user.email || "", userId: user.uid,
+                selected_songs: myPrediction, timestamp: Date.now()
             });
-            setSaveSuccessMsg("הניחוש שלך נשמר בהצלחה! 🤘");
-            setTimeout(() => setSaveSuccessMsg(''), 4000);
-        } catch (e) { 
-            console.error(e);
-            if (e.code === 'permission-denied') {
-                setErrorMsg("שגיאת הרשאה: ייתכן שהתחרות ננעלה בשרת ולא ניתן לעדכן.");
-            } else {
-                setErrorMsg("אירעה שגיאה בשמירת הניחוש.");
-            }
-        }
+            alert("הניחוש שלך נשמר בהצלחה! 🤘");
+        } catch (e) { alert("אירעה שגיאה בשמירת הניחוש."); }
         setIsSaving(false);
       };
 
-      // מחיקה מלאה של הניחוש מהשרת
       const handleDeletePrediction = async () => {
         if (isLocked) return;
         if (!window.confirm("בטוח שברצונך למחוק את הניחוש לצמיתות? פעולה זו תסיר אותך מהתחרות.")) return;
-        
-        if (!user || user.isAnonymous) {
-            setMyPrediction(Array(16).fill(""));
-            return;
-        }
-        
+        if (!user || user.isAnonymous) { setMyPrediction(Array(16).fill("")); return; }
         setIsSaving(true);
-        setErrorMsg('');
-        setSaveSuccessMsg('');
         try {
             await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions', user.uid));
             setMyPrediction(Array(16).fill(""));
-            setSaveSuccessMsg("הניחוש נמחק לחלוטין מהמערכת! 🗑️");
-            setTimeout(() => setSaveSuccessMsg(''), 4000);
-        } catch (e) { 
-            console.error(e);
-            setErrorMsg("אירעה שגיאה במחיקת הניחוש.");
-        }
+            alert("הניחוש נמחק לחלוטין מהמערכת! 🗑️");
+        } catch (e) { alert("אירעה שגיאה במחיקת הניחוש."); }
         setIsSaving(false);
       };
 
-      const convertCurrency = () => {
-          const amt = parseFloat(exchangeAmount);
-          if (isNaN(amt)) return '0';
-          const result = (amt / exchangeRates[fromCurrency]) * exchangeRates[toCurrency];
-          return toCurrency === 'HUF' ? Math.round(result).toLocaleString() : result.toFixed(2);
+      const handleAddCommunityBar = async () => {
+        if (!user || user.isAnonymous) { alert("יש להתחבר כדי להוסיף המלצה."); return; }
+        if (!newBarName.trim()) { alert("אנא הזן את שם המקום."); return; }
+        setIsSaving(true);
+        try {
+          await addDoc(collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars'), {
+            name: newBarName, desc: newBarDesc || "אין תיאור.", category: newBarCategory,
+            addedBy: user.displayName || "אורח", userId: user.uid, timestamp: Date.now()
+          });
+          setNewBarName(''); setNewBarDesc(''); setNewBarCategory('nightlife');
+          setShowAddBarForm(false);
+        } catch (e) { alert("שגיאה בשמירת ההמלצה."); }
+        setIsSaving(false);
       };
 
-      const checkinsByZone = useMemo(() => {
-        const grouped = {};
-        STADIUM_ZONES.forEach(z => grouped[z] = []);
-        checkins.forEach(c => { if(grouped[c.zone]) grouped[c.zone].push(c); });
-        return grouped;
-      }, [checkins]);
+      const handleDeleteCommunityBar = async (barId) => {
+        if (!window.confirm("בטוח שברצונך למחוק המלצה זו?")) return;
+        try { await deleteDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars', barId)); } 
+        catch(e) { alert("שגיאת הרשאות! לא ניתן למחוק את ההמלצה."); }
+      };
+
+      const handlePublishSetlist = async () => {
+        if(!adminInput) return;
+        await setDoc(doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist'), { list: adminInput, timestamp: Date.now() });
+        setAdminInput('');
+        alert("פורסם!");
+      };
+
+      const calculateCurrency = () => {
+         const amt = parseFloat(exchangeAmount);
+         if (isNaN(amt)) return '0';
+         const res = (amt / exchangeRates[fromCurrency]) * exchangeRates[toCurrency];
+         return toCurrency === 'HUF' ? Math.round(res).toLocaleString() : res.toFixed(2);
+      };
+
+      const leaderboard = useMemo(() => {
+        if (!officialSetlist || allPredictions.length === 0) return [];
+        return allPredictions.map(p => {
+          let score = 0, exact = 0, partial = 0;
+          p.selected_songs?.forEach((s, i) => {
+            if (s === officialSetlist[i]) { score += 5; exact++; }
+            else if (officialSetlist.includes(s)) { score += 2; partial++; }
+          });
+          return { ...p, score, exact, partial };
+        }).sort((a,b) => b.score - a.score || b.exact - a.exact);
+      }, [officialSetlist, allPredictions]);
+
 
       return (
-        <div className="min-h-screen flex flex-col relative pb-safe max-w-lg mx-auto shadow-2xl">
+        <div className="app-container">
           
-          {isWhatsAppOrInApp && (
-            <div className="bg-red-600 text-white p-3 text-center text-sm font-bold z-50 sticky top-0 shadow-lg">
-                ⚠️ פתח ב-Chrome/Safari כדי להתחבר לחשבון!
+          {/* Header */}
+          <header className="h-[70px] flex items-center justify-between px-4 bg-black/90 backdrop-blur-md border-b border-blue-900 z-50 shrink-0">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <img src="./logo.jpg" onClick={handleLogoClick} style={{width: '40px', height: '40px', objectFit: 'cover'}} className="rounded-full border-2 border-blue-400 lightning-glow cursor-pointer" alt="Logo" />
+              <h1 dir="ltr" className="text-[13px] sm:text-sm font-bold tracking-tight whitespace-nowrap overflow-hidden text-white">
+                CHAPTER 491 GOES TO <span className="text-red-500">BUD</span><span className="text-white">AP</span><span className="text-green-500">EST</span>
+              </h1>
             </div>
-          )}
-
-          <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-40">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <img 
-                  src="./logo.jpg" 
-                  onClick={handleLogoClick}
-                  className="w-12 h-12 rounded-full border-2 border-blue-400 object-cover lightning-glow cursor-pointer shrink-0" 
-                  alt="Logo"
-                  onError={(e) => { e.target.style.display='none'; }}
-                />
-                <div dir="ltr" className="text-left flex-1 overflow-hidden">
-                  <h1 className="text-[13px] xs:text-[14px] sm:text-base font-bold text-white tracking-wider whitespace-nowrap">
-                    CHAPTER 491 GOES TO <span className="text-red-500">BUD</span><span className="text-white">AP</span><span className="text-green-500">EST</span>
-                  </h1>
-                </div>
-              </div>
-              {!user?.isAnonymous && user && (
-                <button onClick={handleLogout} className="text-blue-300 p-2 hover:text-white transition shrink-0"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
-              )}
-            </div>
+            {user && !user.isAnonymous && (
+              <button onClick={() => signOut(auth).then(() => window.location.reload())} className="text-blue-400 p-2"><i className="fa-solid fa-right-from-bracket text-lg"></i></button>
+            )}
           </header>
 
-          <main className="p-4 flex-1 relative z-10 overflow-y-auto">
-            
+          {/* Main Content Area */}
+          <main>
             {activeTab === 'friends' && (
-              <div className="space-y-5">
-                <div className="bg-black/60 border border-blue-900/50 rounded-2xl p-6 shadow-xl">
-                  {(!user || user.isAnonymous) ? (
-                    <div className="text-center space-y-4">
-                      <h2 className="text-xl font-bold text-white">Seek & Locate - מי נמצא איפה?</h2>
-                      <button onClick={handleGoogleLogin} className="w-full bg-white hover:bg-gray-200 text-black font-bold py-3.5 rounded-xl flex items-center justify-center gap-3 transition">
-                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-                        Jump in the Fire (התחבר עם Google)
-                      </button>
-                      {errorMsg && <p className="text-red-400 text-sm font-bold bg-red-900/40 p-2 rounded">{errorMsg}</p>}
-                    </div>
+              <div className="space-y-4 fade-in">
+                <div className="bg-black/80 border border-blue-900/50 rounded-2xl p-5 shadow-xl">
+                  <h2 className="text-lg font-bold mb-4 text-white">Seek & Locate - מי נמצא איפה?</h2>
+                  {!user || user.isAnonymous ? (
+                    <button onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="w-full bg-white text-black font-bold py-3 rounded-xl flex justify-center items-center gap-2">
+                      <img src="https://www.svgrepo.com/show/475656/google-color.svg" style={{width: '20px', height: '20px'}} alt="Google" /> Jump in the Fire (התחבר)
+                    </button>
                   ) : (
-                    <div>
-                      <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-white text-lg">אהלן, {user.displayName}</h2>
-                        <button onClick={() => setShowCheckInForm(!showCheckInForm)} className="bg-blue-600 px-4 py-2 rounded-xl text-sm font-bold">Hit the Lights (אני פה)</button>
-                      </div>
-                      {showCheckInForm && (
-                        <div className="space-y-4 bg-blue-950/30 p-4 rounded-xl border border-blue-800/50 mt-4">
-                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none">
-                            {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
-                          </select>
-                          <input type="text" placeholder="Famous Last Words... (הודעה לחברים)" value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
-                          <div className="flex gap-2">
-                              <button onClick={handleCheckIn} disabled={isSaving} className="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white transition active:scale-95">Seek & Deploy (שמור מיקום)</button>
-                              <button onClick={handleDeleteLocation} disabled={isSaving} className="bg-red-900/80 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-bold transition active:scale-95">
-                                  <i className="fa-solid fa-trash-can text-lg"></i>
-                              </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <button onClick={() => setShowCheckInForm(true)} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition">Hit the Lights (אני פה)</button>
                   )}
                 </div>
 
-                <div className="bg-green-950/30 border border-green-800/40 rounded-2xl p-5 shadow-lg">
+                <div className="bg-green-950/80 border border-green-800/40 rounded-2xl p-5 shadow-lg">
                   <h3 className="font-bold text-white mb-3 flex items-center gap-2">
                     <i className="fa-brands fa-whatsapp text-green-500 text-xl"></i>
                     קבוצות הוואטסאפ של המשלחת
                   </h3>
                   <div className="flex flex-col gap-3">
-                    <button onClick={() => window.open('https://chat.whatsapp.com/GaUcKFTWg2jACThpFUM6Iq', '_blank')} className="bg-[#25D366] hover:bg-[#1ebd57] text-black py-3 px-4 rounded-xl text-sm font-bold flex justify-between items-center transition shadow-md active:scale-95">
+                    <button onClick={() => window.open('https://chat.whatsapp.com/GaUcKFTWg2jACThpFUM6Iq', '_blank')} className="bg-[#25D366] hover:bg-[#1ebd57] text-black py-3 px-4 rounded-xl text-sm font-bold flex justify-between items-center transition shadow-md">
                       <span>הקבוצה הרשמית של המועדון</span>
                       <i className="fa-solid fa-arrow-up-right-from-square opacity-70"></i>
                     </button>
-                    <button onClick={() => window.open('https://chat.whatsapp.com/Gw5h7ZSvmV0FcHUkdTzPUd', '_blank')} className="bg-[#25D366] hover:bg-[#1ebd57] text-black py-3 px-4 rounded-xl text-sm font-bold flex justify-between items-center transition shadow-md active:scale-95">
+                    <button onClick={() => window.open('https://chat.whatsapp.com/Gw5h7ZSvmV0FcHUkdTzPUd', '_blank')} className="bg-[#25D366] hover:bg-[#1ebd57] text-black py-3 px-4 rounded-xl text-sm font-bold flex justify-between items-center transition shadow-md">
                       <span>קבוצת הנוסעים לבודפשט</span>
                       <i className="fa-solid fa-arrow-up-right-from-square opacity-70"></i>
                     </button>
@@ -622,8 +447,8 @@
                     <p className="text-xs text-green-400 mb-3 font-bold"><i className="fa-solid fa-user-shield ml-1"></i> צוות האדמינים (לכל שאלה):</p>
                     <div className="grid grid-cols-2 gap-2">
                       {ADMINS.map(admin => (
-                        <a key={admin.name} href={`https://wa.me/${admin.wa}`} target="_blank" rel="noreferrer" className="bg-black/40 p-3 rounded-lg border border-green-900/30 flex items-center justify-center gap-2 hover:bg-black/60 transition active:scale-95">
-                          <i className="fa-brands fa-whatsapp text-green-500"></i>
+                        <a key={admin.name} href={`https://wa.me/${admin.wa}`} target="_blank" rel="noreferrer" className="bg-black/60 p-3 rounded-lg border border-green-900/50 flex items-center justify-center gap-2 hover:bg-black/80 transition">
+                          <i className="fa-brands fa-whatsapp text-green-500 text-lg"></i>
                           <span className="text-xs text-white font-bold">{admin.name}</span>
                         </a>
                       ))}
@@ -631,514 +456,320 @@
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {STADIUM_ZONES.map(zone => {
-                    const zoneCheckins = checkinsByZone[zone];
-                    if (!zoneCheckins || zoneCheckins.length === 0) return null;
-                    return (
-                      <div key={zone} className="bg-black/60 border border-gray-800 rounded-2xl overflow-hidden">
-                        <div className="bg-gray-900/80 px-4 py-2 flex justify-between border-b border-gray-800 text-blue-400 font-bold">
-                          <span>{zone}</span>
-                          <span className="text-xs bg-blue-900/50 px-2 rounded-full text-blue-200">{zoneCheckins.length}</span>
-                        </div>
-                        {zoneCheckins.map(c => (
-                          <div key={c.id} className="p-4 flex gap-4 items-center border-b border-gray-800/30">
-                            <img src={c.photoURL || 'https://placehold.co/100/1e3a8a/ffffff?text=🤘'} className="w-10 h-10 rounded-full border border-gray-700" alt="Avatar" />
-                            <div className="flex-1 text-sm">
-                              <div className="flex justify-between font-bold text-white"><span>{c.name}</span><span className="text-[10px] text-gray-500">{timeAgo(c.timestamp)}</span></div>
-                              {c.message && <p className="text-gray-400 text-xs mt-0.5">{c.message}</p>}
-                            </div>
-                          </div>
-                        ))}
+                {STADIUM_ZONES.map(zone => {
+                  const items = checkins.filter(c => c.zone === zone);
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={zone} className="bg-black/60 border border-gray-800 rounded-xl overflow-hidden shadow-lg">
+                      <div className="bg-gray-900/90 px-4 py-2 flex justify-between items-center font-bold text-blue-400 text-sm border-b border-gray-800">
+                        <span>{zone}</span><span className="bg-blue-900/50 px-2 rounded-full text-xs text-blue-200">{items.length}</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      {items.map(c => (
+                        <div key={c.id} className="p-3 flex gap-3 items-center border-b border-gray-800/30">
+                          <img src={c.photoURL || 'https://placehold.co/50/1e3a8a/fff?text=🤘'} style={{width: '32px', height: '32px', borderRadius: '50%'}} alt="Avatar" />
+                          <div className="flex-1 text-sm">
+                            <div className="flex justify-between font-bold text-white"><span>{c.name}</span><span className="text-[10px] text-gray-500">{timeAgo(c.timestamp)}</span></div>
+                            {c.message && <p className="text-gray-400 text-xs mt-1">{c.message}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {activeTab === 'map' && (
-              <div className="space-y-4 animate-in fade-in">
-                {PLACES.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-gray-800 rounded-2xl p-5 flex gap-4 items-center shadow-lg">
-                    <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 whitespace-pre-line">{p.desc}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        {p.hasTickets && (
-                            <button onClick={() => window.open(blsTickets, '_blank')} className="bg-orange-600 hover:bg-orange-500 text-white px-3 rounded-xl flex items-center justify-center font-bold text-xs transition shrink-0">
-                                <i className="fa-solid fa-ticket ml-1"></i> כרטיסים
-                            </button>
-                        )}
-                        <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
             {activeTab === 'takeover' && (
-              <div className="space-y-4 animate-in fade-in">
-                 <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-6 mb-6">
-                  <h2 className="text-xl font-bold text-yellow-400 mb-2"><i className="fa-solid fa-meteor mr-2"></i>Metallica Takeover</h2>
-                  <p className="text-sm text-gray-300">ריכוז האירועים הרשמיים סביב ההופעות (מעודכן לפי פרסומי הלהקה).</p>
+              <div className="space-y-4 fade-in">
+                <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-xl p-4 text-center">
+                  <h2 className="text-lg font-bold text-yellow-400">Metallica Takeover</h2>
+                  <p className="text-xs text-yellow-100 opacity-80">לו"ז אירועים רשמי בעיר</p>
                 </div>
-                
-                {TAKEOVER_EVENTS.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-5 flex gap-4 items-center shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
-                    <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
+                {TAKEOVER_EVENTS.map(ev => (
+                  <div key={ev.id} className="bg-black/80 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+                    <div className={`w-12 h-12 shrink-0 rounded-full bg-gray-900 flex items-center justify-center text-lg ${ev.color}`}><i className={ev.icon}></i></div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
+                      <h3 className="font-bold text-white">{ev.name}</h3>
+                      <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{ev.desc}</p>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
-                    </div>
+                    <button onClick={() => window.open(getMapUrl(ev.lat, ev.lng), '_blank')} className="bg-blue-600 text-white w-10 h-10 shrink-0 rounded-xl flex items-center justify-center hover:bg-blue-500 transition"><i className="fa-solid fa-location-arrow"></i></button>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {activeTab === 'transport' && (
-              <div className="space-y-4">
-                <div className="bg-blue-900/20 border border-blue-900/50 rounded-2xl p-6">
-                  <h2 className="text-xl font-bold text-white mb-2"><i className="fa-solid fa-train-subway text-red-500 mr-2"></i>Ride the Lightning (המטרו של בודפשט)</h2>
-                  <p className="text-sm text-gray-300">הדרך המהירה לאצטדיון. רדו בתחנת <strong>Puskás Ferenc Stadion</strong>.</p>
-                </div>
-                
-                <h2 className="text-xl font-bold text-white mb-2 mt-6"><i className="fa-solid fa-gauge-high text-yellow-500 mr-2"></i>Motorbreath (רכבים ותחבורה)</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  
-                  <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
-                    <i className="fa-solid fa-car text-3xl text-yellow-500 mb-2"></i>
-                    <h4 className="font-bold text-white text-lg mb-4">Bolt</h4>
-                    <div className="flex flex-col gap-2 w-full mt-auto">
-                        <button onClick={() => window.open(boltIOS, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-[10px] font-bold w-full flex justify-center items-center gap-1 transition">
-                            <i className="fa-brands fa-apple text-sm"></i> App Store
-                        </button>
-                        <button onClick={() => window.open(boltAndroid, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-[10px] font-bold w-full flex justify-center items-center gap-1 transition">
-                            <i className="fa-brands fa-google-play text-green-400 text-xs"></i> Google Play
-                        </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
-                    <i className="fa-solid fa-ticket text-3xl text-blue-400 mb-2"></i>
-                    <h4 className="font-bold text-white text-lg mb-4">BudapestGO</h4>
-                    <div className="flex flex-col gap-2 w-full mt-auto">
-                        <button onClick={() => window.open(bkkIOS, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-[10px] font-bold w-full flex justify-center items-center gap-1 transition">
-                            <i className="fa-brands fa-apple text-sm"></i> App Store
-                        </button>
-                        <button onClick={() => window.open(bkkAndroid, '_blank')} className="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white py-2 rounded-lg text-[10px] font-bold w-full flex justify-center items-center gap-1 transition">
-                            <i className="fa-brands fa-google-play text-green-400 text-xs"></i> Google Play
-                        </button>
-                    </div>
-                  </div>
-
-                </div>
               </div>
             )}
 
             {activeTab === 'currency' && (
-              <div className="bg-black/80 border border-gray-800 rounded-2xl p-6 text-center shadow-2xl">
-                <h2 className="text-2xl font-bold text-white mb-6">מחשבון המרה</h2>
-                <div className="flex flex-col gap-4 w-full max-w-sm mx-auto">
-                  <div className="flex gap-2 w-full">
-                    <input type="number" value={exchangeAmount} onChange={e => setExchangeAmount(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white text-xl font-bold text-center outline-none focus:border-blue-500 w-full" dir="ltr" />
-                    <select value={fromCurrency} onChange={e => setFromCurrency(e.target.value)} className="w-20 shrink-0 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2 text-center outline-none">
-                      <option value="ILS">₪</option><option value="HUF">Ft</option><option value="EUR">€</option>
-                    </select>
-                  </div>
-                  <button onClick={() => { const f = fromCurrency; setFromCurrency(toCurrency); setToCurrency(f); }} className="w-10 h-10 bg-blue-600 hover:bg-blue-500 rounded-full mx-auto text-white flex items-center justify-center active:scale-90 transition shadow-lg my-1">
-                      <i className="fa-solid fa-arrow-down-up-across-line"></i>
-                  </button>
-                  <div className="flex gap-2 w-full">
-                    <div className="flex-1 bg-gray-900 border border-blue-500/30 rounded-xl p-3 text-2xl font-bold text-blue-400 flex items-center justify-center w-full overflow-hidden" dir="ltr">
-                        {convertCurrency()}
-                    </div>
-                    <select value={toCurrency} onChange={e => setToCurrency(e.target.value)} className="w-20 shrink-0 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold p-2 text-center outline-none">
-                      <option value="HUF">Ft</option><option value="ILS">₪</option><option value="EUR">€</option>
-                    </select>
-                  </div>
+              <div className="bg-black/80 border border-gray-800 rounded-2xl p-6 text-center shadow-2xl fade-in">
+                <h2 className="text-xl font-bold mb-6 text-white">מחשבון המרה</h2>
+                <div className="space-y-4 max-w-xs mx-auto">
+                   <div className="flex gap-2">
+                     <input 
+                       type="number" 
+                       value={exchangeAmount} 
+                       onChange={(e) => setExchangeAmount(e.target.value)} 
+                       className="flex-1 bg-gray-900 border border-gray-700 p-3 rounded-xl text-center text-xl font-bold text-white outline-none focus:border-blue-500" 
+                     />
+                     <select 
+                       value={fromCurrency} 
+                       onChange={(e) => setFromCurrency(e.target.value)} 
+                       className="bg-gray-800 p-2 rounded-xl text-sm font-bold text-white outline-none"
+                     >
+                        <option value="ILS">₪</option>
+                        <option value="HUF">Ft</option>
+                        <option value="EUR">€</option>
+                     </select>
+                   </div>
+                   
+                   <div className="text-blue-400 text-4xl font-black py-4" dir="ltr">
+                     {calculateCurrency()}
+                   </div>
+                   
+                   <div className="flex gap-2 text-gray-400 justify-center items-center">
+                     <span className="text-sm">למטבע:</span>
+                     <select 
+                       value={toCurrency} 
+                       onChange={(e) => setToCurrency(e.target.value)} 
+                       className="bg-transparent font-bold text-white outline-none"
+                     >
+                        <option value="HUF">Ft</option>
+                        <option value="ILS">₪</option>
+                        <option value="EUR">€</option>
+                     </select>
+                   </div>
+                   <p className="text-[10px] text-gray-500 font-bold mt-4 pt-4 border-t border-gray-800">{ratesStatus}</p>
                 </div>
-                
-                {/* --- מראה למשתמש את סטטוס חיבור השערים --- */}
-                <div className="mt-6 pt-4 border-t border-gray-800">
-                  <p className="text-[11px] text-gray-500 font-bold">{ratesStatus}</p>
-                </div>
-                
               </div>
             )}
-
+            
             {activeTab === 'bars' && (
-              <div className="space-y-6">
-                <div className="bg-black/60 border border-gray-800 rounded-2xl p-6 shadow-lg">
-                  <h2 className="font-bold text-white mb-4">Wherever I May Roam (חיפוש בעיר) <i className="fa-brands fa-google text-blue-400"></i></h2>
-                  <div className="flex gap-2">
-                    <input type="text" placeholder="סופרמרקט, פארם..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500 w-full" />
-                    <button onClick={() => window.open(getMapSearchUrl(searchQuery + ' Budapest'), '_blank')} className="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl text-white active:scale-95 transition shrink-0"><i className="fa-solid fa-search"></i></button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {['רוק ברים', 'גיטרות', 'סטארבקס', 'אוכל'].map(tag => (
-                      <button key={tag} onClick={() => window.open(getMapSearchUrl(tag + ' Budapest'), '_blank')} className="bg-gray-800 px-3 py-1.5 rounded-full text-xs text-gray-300 border border-gray-700 hover:bg-gray-700 transition">{tag}</button>
-                    ))}
-                  </div>
+              <div className="space-y-4 fade-in">
+                <div className="bg-black/80 border border-gray-800 p-4 rounded-xl flex gap-2">
+                   <input 
+                     type="text" 
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     placeholder="Wherever I May Roam (חיפוש)" 
+                     className="flex-1 bg-gray-900 p-3 rounded-xl text-sm outline-none text-white focus:border-blue-500 border border-transparent" 
+                   />
+                   <button onClick={() => window.open(getMapSearchUrl(searchQuery + ' Budapest'), '_blank')} className="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl text-white transition"><i className="fa-solid fa-search"></i></button>
                 </div>
                 
-                {/* המלצות הצוות המקוריות */}
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2">Whiskey in the Jar (איפה שותים?)</h2>
+                <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2 pt-4">Whiskey in the Jar (איפה שותים?)</h2>
                   {CURATED_BARS.map(item => (
-                    <div key={item.name} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
+                    <div key={item.name} className="bg-black/80 border border-gray-800 rounded-2xl p-4 flex justify-between items-center shadow-lg">
                       <div className="flex-1 pl-2"><h4 className="font-bold text-white">{item.name}</h4><p className="text-xs text-gray-400 mt-1">{item.desc}</p></div>
-                      <button onClick={() => window.open(getMapSearchUrl(item.name + ' Budapest'), '_blank')} className="text-red-500 bg-gray-800 hover:bg-gray-700 w-10 h-10 rounded-xl flex items-center justify-center shrink-0 active:scale-90 transition"><i className="fa-solid fa-location-dot"></i></button>
+                      <button onClick={() => window.open(getMapSearchUrl(item.name + ' Budapest'), '_blank')} className="text-red-500 bg-gray-800 hover:bg-gray-700 w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition"><i className="fa-solid fa-location-dot"></i></button>
                     </div>
-                  ))}
+                ))}
+
+                <div className="flex justify-between items-center px-1 pt-6 border-t border-purple-900/50 mt-6">
+                  <h2 className="font-bold text-purple-400">המלצות מהמשלחת</h2>
+                  {(!user || user.isAnonymous) ? (
+                    <button onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="text-xs bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 text-white">התחבר כדי להמליץ</button>
+                  ) : (
+                    <button onClick={() => setShowAddBarForm(true)} className="bg-purple-600 hover:bg-purple-500 text-xs px-3 py-1.5 rounded-lg font-bold text-white transition">הוסף מקום <i className="fa-solid fa-plus ml-1"></i></button>
+                  )}
                 </div>
 
-                {/* --- אזור המלצות הקהילה --- */}
-                <div className="space-y-4 pt-4 mt-6 border-t border-purple-900/50">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-lg font-bold text-purple-400">המלצות מהמשלחת (קהילה)</h2>
-                    {(!user || user.isAnonymous) ? (
-                      <button onClick={handleGoogleLogin} className="text-xs bg-gray-800 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 hover:bg-gray-700">התחבר כדי להמליץ</button>
-                    ) : (
-                      <button onClick={() => setShowAddBarForm(!showAddBarForm)} className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold shadow-md active:scale-95 transition">הוסף מקום <i className="fa-solid fa-plus ml-1"></i></button>
-                    )}
+                {showAddBarForm && (
+                  <div className="bg-purple-950/40 p-4 rounded-xl border border-purple-800/50">
+                    <select value={newBarCategory} onChange={(e) => setNewBarCategory(e.target.value)} className="w-full bg-black/80 text-white border border-purple-800 rounded-xl p-3 mb-3 outline-none">
+                      {Object.entries(POI_CATEGORIES).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                    <input type="text" value={newBarName} onChange={(e) => setNewBarName(e.target.value)} placeholder="שם המקום (חובה)" className="w-full bg-black/80 text-white border border-purple-800 rounded-xl p-3 mb-3 outline-none" />
+                    <input type="text" value={newBarDesc} onChange={(e) => setNewBarDesc(e.target.value)} placeholder="תיאור קצר..." className="w-full bg-black/80 text-white border border-purple-800 rounded-xl p-3 mb-3 outline-none" />
+                    <div className="flex gap-2">
+                      <button onClick={handleAddCommunityBar} disabled={isSaving || !newBarName.trim()} className="flex-1 bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-bold text-white disabled:opacity-50 transition">שתף!</button>
+                      <button onClick={() => setShowAddBarForm(false)} className="bg-gray-800 hover:bg-gray-700 px-4 rounded-xl text-gray-300 transition">ביטול</button>
+                    </div>
                   </div>
+                )}
 
-                  {showAddBarForm && user && !user.isAnonymous && (
-                    <div className="bg-purple-950/30 p-4 rounded-xl border border-purple-800/50 animate-in fade-in">
-                      <select value={newBarCategory} onChange={e => setNewBarCategory(e.target.value)} className="w-full bg-black/50 border border-purple-800 rounded-xl p-3 text-white outline-none mb-3">
-                        {Object.entries(POI_CATEGORIES).map(([key, cat]) => (
-                          <option key={key} value={key}>{cat.label}</option>
-                        ))}
-                      </select>
-                      <input type="text" placeholder="שם המקום (חובה)" value={newBarName} onChange={e => setNewBarName(e.target.value)} className="w-full bg-black/50 border border-purple-800 rounded-xl p-3 text-white outline-none mb-3" />
-                      <input type="text" placeholder="תיאור קצר (למשל: אחלה בירה זולה)" value={newBarDesc} onChange={e => setNewBarDesc(e.target.value)} className="w-full bg-black/50 border border-purple-800 rounded-xl p-3 text-white outline-none mb-3" />
-                      <div className="flex gap-2">
-                        <button onClick={handleAddCommunityBar} disabled={isSaving || !newBarName.trim()} className="flex-1 bg-purple-600 py-3 rounded-xl font-bold text-white transition active:scale-95 disabled:opacity-50">שתף עם כולם!</button>
-                        <button onClick={() => setShowAddBarForm(false)} className="bg-gray-800 px-4 rounded-xl text-gray-400 hover:text-white transition">ביטול</button>
+                {communityBars.map(bar => {
+                  const catInfo = POI_CATEGORIES[bar.category] || POI_CATEGORIES['other'];
+                  const isOwnerOrAdmin = (user && user.uid === bar.userId) || isAdmin;
+                  return (
+                    <div key={bar.id} className="bg-black/80 border border-purple-900/40 p-4 rounded-2xl flex flex-col shadow-xl">
+                      <div className="flex justify-between items-start mb-2">
+                         <div className="flex-1 pl-2">
+                           <div className="flex items-center gap-2 mb-1">
+                             <h4 className="font-bold text-purple-100">{bar.name}</h4>
+                             <span className={`text-[9px] px-2 py-0.5 rounded-md border ${catInfo.color}`}>{catInfo.label}</span>
+                           </div>
+                           <p className="text-xs text-gray-400 mb-2">{bar.desc}</p>
+                         </div>
+                         <div className="flex flex-col gap-2 shrink-0">
+                           <button onClick={() => window.open(getMapSearchUrl(bar.name + ' Budapest'), '_blank')} className="text-purple-400 bg-gray-800 hover:bg-gray-700 w-10 h-10 rounded-xl flex items-center justify-center transition"><i className="fa-solid fa-location-dot"></i></button>
+                           {isOwnerOrAdmin && (
+                              <button onClick={() => handleDeleteCommunityBar(bar.id)} className="text-red-400 bg-red-900/20 hover:bg-red-900/40 border border-red-900/50 w-10 h-10 rounded-xl flex items-center justify-center transition"><i className="fa-solid fa-trash-can"></i></button>
+                           )}
+                         </div>
+                      </div>
+                      <div className="text-[10px] text-gray-500 border-t border-gray-800/50 pt-2 mt-1 flex justify-between">
+                         <span><i className="fa-solid fa-user ml-1 opacity-50 text-purple-400"></i>ע"י <strong>{bar.addedBy}</strong></span>
+                         <span>{timeAgo(bar.timestamp)}</span>
                       </div>
                     </div>
-                  )}
-
-                  {communityBars.length === 0 ? (
-                    <div className="text-center p-4 bg-black/40 rounded-xl border border-gray-800">
-                      <p className="text-sm text-gray-500">עדיין אין המלצות מהחברים. תהיו הראשונים!</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {communityBars.map(bar => {
-                        const catInfo = POI_CATEGORIES[bar.category] || POI_CATEGORIES['other'];
-                        const isOwnerOrAdmin = (user && user.uid === bar.userId) || isAdmin;
-
-                        return (
-                          <div key={bar.id} className="bg-black/60 border border-purple-900/30 rounded-2xl p-4 flex flex-col shadow-lg">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex-1 pl-2">
-                                 <div className="flex items-center gap-2 mb-1">
-                                   <h4 className="font-bold text-purple-200">{bar.name}</h4>
-                                   <span className={`text-[9px] px-2 py-0.5 rounded-md border ${catInfo.color}`}>
-                                     {catInfo.label}
-                                   </span>
-                                 </div>
-                                 <p className="text-xs text-gray-400 mt-1">{bar.desc}</p>
-                              </div>
-                              <div className="flex flex-col gap-2 shrink-0">
-                                 <button onClick={() => window.open(getMapSearchUrl(bar.name + ' Budapest'), '_blank')} className="text-purple-400 bg-gray-800 hover:bg-gray-700 w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition">
-                                   <i className="fa-solid fa-location-dot"></i>
-                                 </button>
-                                 {isOwnerOrAdmin && (
-                                   <button onClick={() => handleDeleteCommunityBar(bar.id)} className="text-red-400 bg-red-900/20 hover:bg-red-900/40 border border-red-900/50 w-10 h-10 rounded-xl flex items-center justify-center active:scale-90 transition">
-                                     <i className="fa-solid fa-trash-can"></i>
-                                   </button>
-                                 )}
-                              </div>
-                            </div>
-                            <div className="text-[10px] text-gray-500 flex justify-between items-center border-t border-gray-800/50 pt-2 mt-1">
-                              <span><i className="fa-solid fa-user text-purple-900 ml-1"></i> הומלץ ע"י: <strong>{bar.addedBy}</strong></span>
-                              <span>{timeAgo(bar.timestamp)}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
+                  );
+                })}
               </div>
             )}
 
             {activeTab === 'game' && (
-              <div className="space-y-4 animate-in fade-in">
+              <div className="space-y-4 fade-in">
                 {officialSetlist ? (
-                  <div className="bg-gradient-to-r from-yellow-900/40 to-orange-900/40 border border-yellow-800/50 rounded-2xl p-6 shadow-xl text-center">
-                    <h2 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center justify-center gap-2">
-                      <i className="fa-solid fa-trophy text-yellow-500"></i>
-                      ...And Justice for All! (תוצאות האמת)
-                    </h2>
-                    <p className="text-sm text-gray-300 mb-4">
-                      הסטליסט הרשמי פורסם! הנה דירוג המנחשים של המשלחת:
-                    </p>
-                    <div className="text-[10px] sm:text-xs bg-black/40 p-2 rounded-lg inline-block text-gray-400 mb-6">
-                      בול בפגיעה (מיקום נכון) = <strong className="text-yellow-500">5 נק'</strong> | שיר נכון במיקום אחר = <strong className="text-blue-400">2 נק'</strong>
-                    </div>
-
-                    <div className="space-y-3">
-                      {leaderboard.map((u, idx) => (
-                        <div key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border ${idx === 0 ? 'bg-yellow-900/40 border-yellow-500' : idx === 1 ? 'bg-gray-400/20 border-gray-400/50' : idx === 2 ? 'bg-orange-900/30 border-orange-700/50' : 'bg-black/50 border-gray-800'}`}>
-                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 ${idx === 0 ? 'bg-yellow-500 text-black text-lg' : idx === 1 ? 'bg-gray-400 text-black' : idx === 2 ? 'bg-orange-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-                              {idx + 1}
-                           </div>
-                           <div className="flex-1 text-right text-sm overflow-hidden">
-                              <div className="font-bold text-white truncate">{u.name}</div>
-                              <div className="text-[10px] text-gray-400">
-                                {u.exactMatches} בולים, {u.partialMatches} חלקיים
-                              </div>
-                           </div>
-                           <div className="text-xl font-bold text-white shrink-0">
-                              {u.score}
-                              <span className="text-[10px] text-gray-500 ml-1">נק'</span>
-                           </div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="bg-yellow-900/30 border border-yellow-500/50 p-6 rounded-2xl text-center shadow-2xl">
+                    <h2 className="text-2xl font-black text-yellow-500 italic">...AND JUSTICE FOR ALL</h2>
+                    <p className="text-xs mb-6 text-gray-300">תוצאות האמת של המשלחת</p>
+                    <div className="text-[10px] bg-black/60 p-2 rounded-lg text-gray-400 mb-4 border border-yellow-900/50">בול בפגיעה = 5 נק' | מיקום אחר = 2 נק'</div>
+                    {leaderboard.map((u, i) => (
+                      <div key={u.id} className={`flex items-center gap-3 p-3 mb-2 rounded-xl ${i===0 ? 'bg-yellow-500 text-black shadow-lg' : 'bg-black/60 border border-gray-800'}`}>
+                         <span className="w-6 font-bold text-center">{i+1}</span>
+                         <span className="flex-1 text-right font-bold truncate">{u.name}</span>
+                         <span className="font-black text-lg">{u.score} <small className="text-[10px] opacity-70">PT</small></span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-800/50 rounded-2xl p-6 shadow-xl">
-                    <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-                      <i className="fa-solid fa-clipboard-list text-purple-400"></i>
-                      Master of the Setlist
-                    </h2>
-                    <p className="text-sm text-gray-300 mb-4">
-                      Build your own Battery! נחשו אילו 16 שירים ירעידו את בודפשט, הוכיחו שאתם Master of Puppets וזכו בתהילת עולם.
-                    </p>
+                  <div className="bg-purple-900/30 border border-purple-500/40 p-5 rounded-2xl shadow-xl">
+                    <h2 className="text-xl font-bold mb-2 text-white">Master of the Setlist</h2>
+                    <p className="text-xs text-gray-300 mb-4 italic">Build your own battery! נחשו את 16 השירים.</p>
                     
-                    <div className="text-[10px] sm:text-xs bg-black/40 p-3 rounded-xl border border-gray-700 text-gray-300 mb-6">
-                      <strong className="text-purple-300">חוקי הניקוד:</strong><br/>
-                      בול בפגיעה (שיר נכון במיקום המדויק) = <strong className="text-yellow-500">5 נקודות</strong><br/>
-                      שיר בסטליסט אבל במיקום אחר = <strong className="text-blue-400">2 נקודות</strong>
-                    </div>
-
-                    {/* שעון ספירה לאחור */}
-                    <div className={`mb-6 p-3 rounded-xl border text-center font-bold shadow-lg transition-colors ${isLocked ? 'bg-red-900/60 border-red-500 text-red-200' : 'bg-purple-900/50 border-purple-500 text-purple-200'}`}>
-                      {isLocked ? (
-                        <><i className="fa-solid fa-lock mr-2 text-red-400"></i> Fade to Black... ההרשמה נסגרה.</>
-                      ) : (
-                        <>
-                          <div className="text-xs text-purple-300 mb-1">התחרות תינעל בעוד:</div>
-                          <div className="text-2xl tracking-wider" dir="ltr">{timeLeftStr}</div>
-                        </>
-                      )}
+                    <div className={`mb-4 p-3 rounded-xl border text-center font-bold ${isLocked ? 'bg-red-900/80 border-red-500 text-red-200' : 'bg-purple-900/60 border-purple-500 text-purple-200'}`}>
+                      {isLocked ? <><i className="fa-solid fa-lock"></i> התחרות ננעלה</> : <span dir="ltr">{timeLeftStr}</span>}
                     </div>
 
                     {(!user || user.isAnonymous) ? (
-                      <div className="text-center bg-black/50 p-4 rounded-xl">
-                        <p className="text-sm text-gray-300 mb-3">יש להתחבר כדי להשתתף בתחרות הניחושים.</p>
-                        <button onClick={handleGoogleLogin} className="bg-white hover:bg-gray-200 text-black font-bold py-2 px-6 rounded-xl transition inline-flex items-center gap-2">
-                           <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
-                           Jump in the Fire (התחבר עם Google)
-                        </button>
-                      </div>
+                      <button onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="w-full bg-white text-black font-bold py-3 rounded-xl flex justify-center items-center gap-2 mb-4 hover:bg-gray-200 transition">
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" style={{width: '20px', height: '20px'}} alt="G" /> התחבר כדי לשחק
+                      </button>
                     ) : (
-                      <div className="space-y-3 pb-8">
-                        {saveSuccessMsg && <div className="bg-green-600/80 border border-green-400 text-white p-3 rounded-xl text-center text-sm font-bold">{saveSuccessMsg}</div>}
-                        {errorMsg && <div className="bg-red-600/80 border border-red-400 text-white p-3 rounded-xl text-center text-sm font-bold">{errorMsg}</div>}
-
+                      <div className="mb-4">
                         <div className="flex justify-between items-center mb-2 px-1">
-                          <span className="text-sm font-bold text-purple-300">הבחירות שלך:</span>
-                          {!isLocked && (
-                            <button 
-                              onClick={handleDeletePrediction}
-                              disabled={isSaving}
-                              className="text-xs bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-800 hover:text-white px-3 py-1.5 rounded-lg transition disabled:opacity-50"
-                            >
-                              <i className="fa-solid fa-trash-can mr-1"></i> Seek & Destroy (מחק הכל)
-                            </button>
-                          )}
+                           <span className="text-xs font-bold text-purple-300">הבחירות שלך:</span>
+                           {!isLocked && (
+                             <button onClick={handleDeletePrediction} disabled={isSaving} className="text-[10px] bg-red-900/60 hover:bg-red-900/80 text-red-400 px-3 py-1.5 rounded-lg border border-red-800 transition text-white">
+                               <i className="fa-solid fa-trash-can ml-1"></i> מחק הכל
+                             </button>
+                           )}
                         </div>
-
-                        <div className="grid grid-cols-1 gap-2">
-                          {myPrediction.map((song, idx) => (
-                            <div key={idx} className="flex items-center gap-3 bg-black/40 border border-gray-700 p-2 rounded-xl shadow-inner">
-                              <div className="w-8 h-8 flex items-center justify-center bg-gray-800 rounded-lg text-gray-400 font-bold shrink-0">{idx + 1}</div>
-                              <button 
-                                onClick={() => !isLocked && setShowSongPicker(idx)}
-                                disabled={isLocked}
-                                className={`flex-1 text-right text-sm px-3 py-2 rounded-lg transition border truncate ${song ? 'bg-blue-900/30 border-blue-800/50 text-white font-bold' : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'}`}
-                                dir="ltr"
-                              >
-                                <div className="text-left w-full truncate">{song || "Tap to select a song..."}</div>
-                              </button>
-                            </div>
-                          ))}
+                        <div className="space-y-2 mb-6">
+                           {myPrediction.map((s, i) => (
+                             <div key={i} className="flex gap-3 items-center bg-black/60 p-2 rounded-xl border border-gray-800 shadow-inner">
+                               <span className="w-6 h-6 flex items-center justify-center bg-gray-800 rounded-md text-[10px] text-gray-400 font-bold shrink-0">{i+1}</span>
+                               <button onClick={() => !isLocked && setShowSongPicker(i)} disabled={isLocked} className={`flex-1 text-right text-sm py-2 px-3 rounded-lg truncate transition outline-none ${s ? 'text-white font-bold bg-blue-900/40 border border-blue-800/50' : 'text-gray-400 bg-gray-800 hover:bg-gray-700 border border-transparent'}`} dir="ltr">{s || 'Tap to select song...'}</button>
+                             </div>
+                           ))}
                         </div>
-
-                        <button 
-                          onClick={handleSavePrediction}
-                          disabled={isLocked || isSaving}
-                          className={`w-full py-4 mt-4 rounded-xl font-bold text-lg shadow-lg flex justify-center items-center gap-2 transition ${isLocked ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white active:scale-95'}`}
-                        >
-                          {isSaving ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-save"></i>}
-                          So Let It Be Written! (שמור ניחוש)
+                        <button onClick={handleSavePrediction} disabled={isLocked || isSaving} className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl flex justify-center items-center gap-2 disabled:opacity-50 transition shadow-lg outline-none">
+                          <i className="fa-solid fa-save"></i> So Let It Be Written!
                         </button>
                       </div>
                     )}
                     
-                    {/* --- רשימת משתתפים שכבר נרשמו --- */}
-                    <div className="mt-8 pt-6 border-t border-purple-900/50">
-                      <h3 className="font-bold text-purple-300 mb-3 flex items-center gap-2">
-                        <i className="fa-solid fa-users"></i> {allPredictions.length} חברים כבר שלחו ניחוש:
-                      </h3>
-                      {allPredictions.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {allPredictions.map(p => (
-                            <div key={p.id} className="bg-black/50 border border-purple-800/30 px-3 py-1.5 rounded-full text-xs text-purple-200 flex items-center gap-2 shadow-sm">
-                              <i className="fa-solid fa-check text-green-500"></i> {p.name}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500">עדיין אין נרשמים למשחק. תהיו הראשונים!</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* מודאל בחירת השירים המלא */}
-                {showSongPicker !== null && (
-                  <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col p-4 backdrop-blur-md animate-in fade-in">
-                    <div className="flex justify-between items-center mb-4 pt-safe">
-                      <h3 className="text-xl font-bold text-white">בחר שיר (מקום {showSongPicker + 1})</h3>
-                      <button onClick={() => {setShowSongPicker(null); setSongSearchLocal('');}} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white active:scale-90 transition">
-                        <i className="fa-solid fa-times"></i>
-                      </button>
-                    </div>
-                    
-                    <input 
-                      type="text" 
-                      placeholder="Search song..." 
-                      value={songSearchLocal}
-                      onChange={e => setSongSearchLocal(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-600 rounded-xl p-4 text-white text-lg mb-4 outline-none focus:border-purple-500"
-                      dir="ltr"
-                    />
-
-                    <div className="flex-1 overflow-y-auto space-y-4 pb-safe relative">
-                      {METALLICA_ALBUMS.map(album => {
-                        const filteredSongs = album.songs.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase()));
-                        if (filteredSongs.length === 0) return null;
-
-                        return (
-                          <div key={album.title} className="mb-2">
-                            <h4 className="text-purple-400 font-bold mb-3 text-sm sticky top-0 bg-black/95 py-2 z-10 border-b border-purple-900/50 flex items-center gap-2" dir="ltr">
-                              <i className="fa-solid fa-compact-disc text-purple-600"></i>
-                              {album.title}
-                            </h4>
-                            <div className="space-y-2 pl-2 border-l border-gray-800 ml-2">
-                              {filteredSongs.map(song => {
-                                const isSelected = myPrediction.includes(song);
-                                return (
-                                  <button 
-                                    key={song}
-                                    onClick={() => {
-                                      const newPred = [...myPrediction];
-                                      newPred[showSongPicker] = song;
-                                      setMyPrediction(newPred);
-                                      setShowSongPicker(null);
-                                      setSongSearchLocal('');
-                                    }}
-                                    className={`w-full text-left p-3 rounded-xl border transition flex justify-between items-center ${isSelected ? 'bg-gray-800 border-gray-700 opacity-50 cursor-not-allowed' : 'bg-black/60 border-purple-900/30 hover:bg-purple-900/40 text-white active:scale-95'}`}
-                                    disabled={isSelected}
-                                    dir="ltr"
-                                  >
-                                    <span className="font-medium text-sm">{song}</span>
-                                    {isSelected && <i className="fa-solid fa-check text-green-500"></i>}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    <div className="mt-6 pt-4 border-t border-purple-900/50">
+                       <h3 className="font-bold text-xs text-purple-300 mb-3"><i className="fa-solid fa-users ml-1"></i> {allPredictions.length} חברים רשומים:</h3>
+                       <div className="flex flex-wrap gap-2">
+                          {allPredictions.map(p => <span key={p.id} className="bg-black/80 text-white text-[10px] px-3 py-1.5 rounded-full border border-purple-900/40 flex items-center gap-1 shadow-sm"><i className="fa-solid fa-check text-green-500"></i> {p.name}</span>)}
+                       </div>
                     </div>
                   </div>
                 )}
               </div>
             )}
-
-            {/* --- פאנל האדמין שיופיע רק אם הופעל --- */}
-            {activeTab === 'admin' && isAdmin && (
-              <div className="space-y-4 animate-in fade-in">
-                <div className="bg-red-900/20 border border-red-500/50 rounded-2xl p-6 shadow-xl text-center">
-                  <h2 className="text-2xl font-bold text-red-400 mb-2 flex items-center justify-center gap-2">
-                    <i className="fa-solid fa-lock-open text-red-500"></i>
-                    פאנל מנהלים סודי
-                  </h2>
-                  <p className="text-sm text-gray-300 mb-4">
-                    הדבק כאן את הסטליסט האמיתי מההופעה (טקסט חופשי). המערכת תנקה את המספרים ותפרסם לכולם את טבלת המובילים!
-                  </p>
-                  
-                  <textarea 
-                    value={adminInput}
-                    onChange={(e) => setAdminInput(e.target.value)}
-                    placeholder="הדבק את רשימת השירים כאן..."
-                    className="w-full h-64 bg-black/60 border border-red-800 rounded-xl p-4 text-white outline-none focus:border-red-500 mb-4"
-                    dir="ltr"
-                  />
-                  
-                  <button 
-                    onClick={handlePublishSetlist}
-                    disabled={isSaving || !adminInput.trim()}
-                    className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    {isSaving ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-bullhorn"></i>}
-                    פרסם את הסטליסט וחשב תוצאות!
-                  </button>
-                </div>
-              </div>
-            )}
-
           </main>
 
-          <nav className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50 overflow-x-auto scrollbar-hide">
-            <div className="max-w-lg mx-auto flex justify-between px-1 py-2 mb-safe min-w-max md:min-w-0">
-              {[
-                { id: 'friends', icon: 'fa-street-view', label: 'רדאר' },
-                { id: 'takeover', icon: 'fa-meteor', label: 'Takeover' },
-                { id: 'game', icon: 'fa-clipboard-list', label: 'ניחושים', highlight: true },
-                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות' },
-                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה' },
-                { id: 'currency', icon: 'fa-money-bill-transfer', label: 'המרה' },
-                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
-              ].map(tab => (
-                <button 
-                   key={tab.id} 
-                   onClick={() => setActiveTab(tab.id)} 
-                   className={`flex flex-col items-center justify-center px-3 py-2 mx-1 rounded-xl transition-all flex-1 min-w-[60px] 
-                   ${activeTab === tab.id 
-                      ? (tab.highlight ? 'text-purple-400 bg-purple-900/20' : 'text-blue-400 bg-blue-900/20') 
-                      : (tab.highlight ? 'text-purple-400 opacity-80 hover:opacity-100 hover:bg-purple-900/10' : 'text-gray-500 hover:text-gray-300')
-                   }`}
-                >
-                  <i className={`fa-solid ${tab.icon} text-lg md:text-xl mb-1`}></i>
-                  <span className="text-[10px] font-bold whitespace-nowrap">{tab.label}</span>
-                </button>
-              ))}
-              
-              {/* כפתור לאדמין בתפריט התחתון שיופיע רק אחרי הקשות הסתר */}
-              {isAdmin && (
-                <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center justify-center px-3 py-2 mx-1 rounded-xl transition-all flex-1 min-w-[60px] ${activeTab === 'admin' ? 'text-red-400 bg-red-900/20' : 'text-red-900 hover:text-red-400'}`}>
-                  <i className="fa-solid fa-user-secret text-lg md:text-xl mb-1"></i>
-                  <span className="text-[10px] font-bold whitespace-nowrap">אדמין</span>
-                </button>
-              )}
-            </div>
+          {/* Navigation מקובע למטה */}
+          <nav className="h-[75px] bg-black/95 backdrop-blur-xl border-t border-gray-800 flex justify-around items-center px-2 z-50 shrink-0 pb-safe">
+            {[
+              { id: 'friends', icon: 'fa-street-view', label: 'רדאר' },
+              { id: 'takeover', icon: 'fa-meteor', label: 'Takeover' },
+              { id: 'game', icon: 'fa-clipboard-list', label: 'ניחושים', color: 'text-purple-400' },
+              { id: 'currency', icon: 'fa-money-bill-transfer', label: 'המרה' },
+              { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex flex-col items-center gap-1 transition-all flex-1 py-2 bg-transparent border-none outline-none ${activeTab === tab.id ? (tab.color || 'text-blue-400 scale-110') : 'text-gray-500 hover:text-gray-300'}`}>
+                <i className={`fa-solid ${tab.icon} text-xl`}></i>
+                <span className="text-[10px] font-bold">{tab.label}</span>
+              </button>
+            ))}
+            {isAdmin && (
+              <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1 flex-1 py-2 bg-transparent border-none outline-none ${activeTab === 'admin' ? 'text-red-400 scale-110' : 'text-red-900 hover:text-red-700'}`}>
+                <i className="fa-solid fa-user-secret text-xl"></i><span className="text-[10px] font-bold">אדמין</span>
+              </button>
+            )}
           </nav>
+
+          {/* מודאל עדכון מיקום */}
+          {showCheckInForm && (
+            <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-gray-900 w-full rounded-3xl p-6 border border-blue-900 shadow-2xl">
+                <h3 className="text-xl font-bold mb-4 text-white">איפה אתה עכשיו?</h3>
+                <select value={selectedZone} onChange={(e) => setSelectedZone(e.target.value)} className="w-full bg-black text-white border border-gray-700 p-4 rounded-xl mb-4 outline-none">
+                  {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
+                </select>
+                <input type="text" value={statusMessage} onChange={(e) => setStatusMessage(e.target.value)} placeholder="משהו לחברים?" className="w-full bg-black text-white border border-gray-700 p-4 rounded-xl mb-6 outline-none" />
+                <div className="flex gap-3">
+                  <button onClick={() => setShowCheckInForm(false)} className="flex-1 py-4 font-bold text-gray-400 bg-transparent border-none outline-none hover:text-white transition">ביטול</button>
+                  <button onClick={handleCheckIn} disabled={isSaving} className="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-bold border-none outline-none hover:bg-blue-500 transition disabled:opacity-50">Strike Here! 🤘</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* מודאל בחירת שיר */}
+          {showSongPicker !== null && (
+            <div className="fixed inset-0 bg-black z-[110] flex flex-col p-4 pt-8 animate-in slide-in-from-bottom">
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-xl font-bold text-white">Choose Song #{showSongPicker+1}</h3>
+                 <button onClick={() => {setShowSongPicker(null); setSongSearchLocal('');}} className="w-10 h-10 bg-gray-800 hover:bg-gray-700 text-white rounded-full border-none outline-none transition"><i className="fa-solid fa-times"></i></button>
+               </div>
+               <input type="text" placeholder="Search..." value={songSearchLocal} onChange={e => setSongSearchLocal(e.target.value)} className="w-full bg-gray-900 text-white p-4 rounded-xl mb-4 border border-purple-900/50 outline-none focus:border-purple-500 transition" dir="ltr" />
+               <div className="flex-1 overflow-y-auto space-y-6 pb-20 scrollbar-hide">
+                 {METALLICA_ALBUMS.map(album => {
+                   const filtered = album.songs.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase()));
+                   if(filtered.length === 0) return null;
+                   return (
+                     <div key={album.title}>
+                       <h4 className="text-xs font-black text-purple-500 uppercase tracking-widest mb-3 border-b border-purple-900/30 pb-1" dir="ltr">{album.title}</h4>
+                       <div className="grid grid-cols-1 gap-2">
+                         {filtered.map(song => {
+                           const isSelected = myPrediction.includes(song);
+                           return (
+                             <button key={song} disabled={isSelected} onClick={() => {
+                               const next = [...myPrediction];
+                               next[showSongPicker] = song;
+                               setMyPrediction(next);
+                               setShowSongPicker(null);
+                               setSongSearchLocal('');
+                             }} className={`text-left p-4 rounded-xl text-sm transition-colors border outline-none ${isSelected ? 'bg-gray-800 border-gray-700 text-gray-600 opacity-50' : 'bg-gray-900/80 border-transparent text-white hover:bg-purple-900/40'}`} dir="ltr">
+                               {song} {isSelected && <i className="fa-solid fa-check text-green-500 float-right mt-0.5"></i>}
+                             </button>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+            </div>
+          )}
+
+          {/* אזור אדמין */}
+          {activeTab === 'admin' && isAdmin && (
+            <div className="fixed inset-0 bg-black/95 z-[100] p-6 flex flex-col justify-center animate-in fade-in">
+                <div className="bg-red-900/30 border border-red-500/50 rounded-3xl p-6 shadow-2xl text-center">
+                  <h2 className="text-2xl font-bold text-red-400 mb-2">פאנל מנהלים סודי</h2>
+                  <p className="text-xs text-gray-300 mb-6">הדבק כאן את הסטליסט האמיתי (טקסט חופשי). המערכת תנקה את המספרים ותפרסם לכולם!</p>
+                  <textarea value={adminInput} onChange={(e) => setAdminInput(e.target.value)} className="w-full h-48 bg-black/80 border border-red-800 rounded-xl p-4 text-white mb-6 outline-none focus:border-red-500 transition" dir="ltr" placeholder="1. Creeping Death..."></textarea>
+                  <div className="flex gap-3">
+                    <button onClick={handlePublishSetlist} disabled={!adminInput.trim() || isSaving} className="flex-[2] bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl border-none outline-none transition disabled:opacity-50">פרסם תוצאות</button>
+                    <button onClick={() => setActiveTab('friends')} className="flex-1 bg-gray-800 hover:bg-gray-700 text-white px-4 rounded-xl border-none outline-none transition">סגור</button>
+                  </div>
+                </div>
+            </div>
+          )}
+
         </div>
       );
     }
@@ -1148,3 +779,6 @@
   </script>
 </body>
 </html>
+
+
+```
