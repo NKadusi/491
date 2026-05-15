@@ -213,6 +213,25 @@
       return cleaned;
     }
 
+    // פונקציה שמסננת אוטומטית הופעות שהתאריך שלהן כבר עבר
+    function filterPastShows(showsList) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      return showsList.filter(showStr => {
+        // מחפש תבנית של תאריך: DD.MM.YYYY (תופס גם את התאריך השני ב"מופע כפול")
+        const match = showStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+        if (!match) return true; // משאיר את "אחר"
+
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1; // חודשים ב-JS מתחילים מ-0
+        const year = parseInt(match[3], 10);
+
+        const showDate = new Date(year, month, day);
+        return showDate >= today;
+      });
+    }
+
     function App() {
       const initialTab = new URLSearchParams(window.location.search).get('tab') || 'friends';
       
@@ -251,9 +270,12 @@
       const [isAdmin, setIsAdmin] = useState(false);
       const [adminInput, setAdminInput] = useState('');
 
+      // רשימת הופעות אקטיבית (רק עתידיות)
+      const activeEuropeanShows = useMemo(() => filterPastShows(EUROPEAN_TOUR_SHOWS), []);
+
       const [tickets, setTickets] = useState([]);
       const [showTicketForm, setShowTicketForm] = useState(false);
-      const [ticketShow, setTicketShow] = useState(EUROPEAN_TOUR_SHOWS[9]); // דיפולט: בודפשט מופע 1
+      const [ticketShow, setTicketShow] = useState(activeEuropeanShows.find(s => s.includes('בודפשט (מופע 1)')) || activeEuropeanShows[0]); 
       const [ticketType, setTicketType] = useState(TICKET_TYPES[4]); // דיפולט דשא
       const [ticketQty, setTicketQty] = useState('1');
       const [ticketPrice, setTicketPrice] = useState('');
@@ -395,6 +417,24 @@
           return { ...pred, score, exactMatches, partialMatches };
         }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
+
+      // מסנן את לוח הכרטיסים כך שלא יציג כרטיסים של הופעות שכבר עברו
+      const activeTickets = useMemo(() => {
+        return tickets.filter(ticket => {
+            const match = ticket.show.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+            if (!match) return true; 
+            
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1;
+            const year = parseInt(match[3], 10);
+            
+            const showDate = new Date(year, month, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            return showDate >= today;
+        });
+      }, [tickets]);
 
       const handleGoogleLogin = async () => {
         setErrorMsg('');
@@ -827,7 +867,7 @@
                       <div>
                         <label className="text-xs text-blue-300 block mb-1">הופעה / עיר:</label>
                         <select value={ticketShow} onChange={e => setTicketShow(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none">
-                          {EUROPEAN_TOUR_SHOWS.map(s => <option key={s} value={s}>{s}</option>)}
+                          {activeEuropeanShows.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
 
@@ -872,13 +912,13 @@
                 )}
 
                 <div className="space-y-4">
-                  {tickets.length === 0 ? (
+                  {activeTickets.length === 0 ? (
                     <div className="text-center py-10 bg-black/40 rounded-2xl border border-gray-800">
                       <i className="fa-solid fa-ticket text-4xl text-gray-700 mb-3 block"></i>
-                      <p className="text-sm text-gray-400">אין כרגע כרטיסים למכירה בלוח.</p>
+                      <p className="text-sm text-gray-400">אין כרגע כרטיסים למכירה בלוח למופעים עתידיים.</p>
                     </div>
                   ) : (
-                    tickets.map(ticket => {
+                    activeTickets.map(ticket => {
                       const isOwnerOrAdmin = (user && user.uid === ticket.userId) || isAdmin;
                       return (
                         <div key={ticket.id} className="bg-black/60 border border-blue-900/40 rounded-2xl overflow-hidden shadow-lg">
@@ -1377,6 +1417,7 @@
   </script>
 </body>
 </html>
+
 
 
 ```
