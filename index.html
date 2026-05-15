@@ -158,7 +158,6 @@
       'other': { label: 'אחר 🎸', color: 'text-gray-300 bg-gray-800/50 border-gray-600/50' }
     };
 
-    // --- מערכי נתונים מפורטים וכרונולוגיים ללוח הכרטיסים (M72 Tour 2026) ---
     const EUROPEAN_TOUR_SHOWS = [
       "09.05.2026 - אתונה, יוון (מופע יחיד) 🇬🇷",
       "13.05.2026 - בוקרשט, רומניה (מופע יחיד) 🇷🇴",
@@ -187,7 +186,6 @@
       "Snake Pit 🐍",
       "פלטפורמות (Moth / Nothing Else)",
       "פרנטיק (Frantic Early Entry)",
-      "גולדן רינג (Golden Circle)",
       "דשא עמידה (General Admission)",
       "יציע תחתון (Lower Tier)",
       "יציע עליון (Upper Tier)",
@@ -213,18 +211,26 @@
       return cleaned;
     }
 
-    // פונקציה שמסננת אוטומטית הופעות שהתאריך שלהן כבר עבר
+    // מעצב את המחיר שיוצג עם סימן ש"ח ופסיקים (למשל: 1,500 ₪)
+    function formatPrice(priceStr) {
+      if (!priceStr) return '';
+      const rawNumber = priceStr.replace(/[^\d.-]/g, '');
+      if (!rawNumber) return priceStr; // אם הזינו טקסט כמו "חינם"
+      const number = parseFloat(rawNumber);
+      if (isNaN(number)) return priceStr;
+      return number.toLocaleString('he-IL') + ' ₪';
+    }
+
     function filterPastShows(showsList) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       return showsList.filter(showStr => {
-        // מחפש תבנית של תאריך: DD.MM.YYYY (תופס גם את התאריך השני ב"מופע כפול")
         const match = showStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
-        if (!match) return true; // משאיר את "אחר"
+        if (!match) return true; 
 
         const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10) - 1; // חודשים ב-JS מתחילים מ-0
+        const month = parseInt(match[2], 10) - 1; 
         const year = parseInt(match[3], 10);
 
         const showDate = new Date(year, month, day);
@@ -270,13 +276,12 @@
       const [isAdmin, setIsAdmin] = useState(false);
       const [adminInput, setAdminInput] = useState('');
 
-      // רשימת הופעות אקטיבית (רק עתידיות)
       const activeEuropeanShows = useMemo(() => filterPastShows(EUROPEAN_TOUR_SHOWS), []);
 
       const [tickets, setTickets] = useState([]);
       const [showTicketForm, setShowTicketForm] = useState(false);
       const [ticketShow, setTicketShow] = useState(activeEuropeanShows.find(s => s.includes('בודפשט (מופע 1)')) || activeEuropeanShows[0]); 
-      const [ticketType, setTicketType] = useState(TICKET_TYPES[4]); // דיפולט דשא
+      const [ticketType, setTicketType] = useState(TICKET_TYPES[3]); 
       const [ticketQty, setTicketQty] = useState('1');
       const [ticketPrice, setTicketPrice] = useState('');
       const [ticketPhone, setTicketPhone] = useState('');
@@ -418,7 +423,6 @@
         }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
 
-      // מסנן את לוח הכרטיסים כך שלא יציג כרטיסים של הופעות שכבר עברו
       const activeTickets = useMemo(() => {
         return tickets.filter(ticket => {
             const match = ticket.show.match(/(\d{2})\.(\d{2})\.(\d{4})/);
@@ -568,7 +572,7 @@
             show: ticketShow,
             type: ticketType,
             qty: ticketQty,
-            price: ticketPrice,
+            price: formatPrice(ticketPrice), // שמירה כטקסט עם סמל הש"ח
             phone: formatWhatsAppNumber(ticketPhone),
             desc: ticketDesc || "",
             sellerName: user.displayName || "אורח",
@@ -886,8 +890,8 @@
                           </select>
                         </div>
                         <div className="flex-1">
-                          <label className="text-xs text-blue-300 block mb-1">מחיר מבוקש:</label>
-                          <input type="text" placeholder="למשל: מחיר עלות / 100 יורו" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
+                          <label className="text-xs text-blue-300 block mb-1">מחיר מבוקש (בש"ח):</label>
+                          <input type="text" placeholder="למשל: 1500" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
                         </div>
                       </div>
 
@@ -1417,7 +1421,6 @@
   </script>
 </body>
 </html>
-
 
 
 ```
