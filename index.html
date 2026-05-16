@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
   
+  <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Metallica HU">
@@ -188,6 +189,14 @@
       "כרטיס משולב ליומיים (2-Day Pass)",
       "VIP / חבילת אירוח אחרת"
     ];
+
+    function timeAgo(timestamp) {
+      if (!timestamp) return '';
+      const seconds = Math.floor((Date.now() - timestamp) / 1000);
+      if (seconds < 60) return 'עכשיו';
+      const minutes = Math.floor(seconds / 60);
+      return minutes < 60 ? `לפני ${minutes} דק'` : `לפני ${Math.floor(minutes/60)} שע'`;
+    }
 
     function formatWhatsAppNumber(phone) {
       let cleaned = phone.replace(/\D/g, ''); 
@@ -580,10 +589,12 @@
       const handleDeletePrediction = async () => {
         if (isLocked) return;
         if (!window.confirm("בטוח שברצונך למחוק את הניחוש לצמיתות? פעולה זו תסיר אותך מהתחרות.")) return;
+        
         if (!user || user.isAnonymous) {
             setMyPrediction(Array(16).fill(""));
             return;
         }
+        
         setIsSaving(true);
         setErrorMsg('');
         setSaveSuccessMsg('');
@@ -711,7 +722,7 @@
                   </div>
                 </div>
 
-                {/* --- אזור: גלריית תמונות משותפת --- */}
+                {/* --- אזור חדש: גלריית תמונות משותפת --- */}
                 <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/40 border border-blue-700/50 rounded-2xl p-5 shadow-lg">
                   <h3 className="font-bold text-white mb-2 flex items-center gap-2">
                     <i className="fa-solid fa-camera-retro text-blue-400 text-xl"></i>
