@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
-  
+
+
   <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,12 +16,15 @@
   <link rel="apple-touch-icon" href="./logo.jpg">
   <link rel="icon" type="image/jpeg" href="./logo.jpg">
 
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
+
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 
   <style>
     body { 
@@ -32,23 +36,29 @@
       background-attachment: fixed;
       background-position: center;
     }
-    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 100px) !important; }
+    .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important; }
     .lightning-glow { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.9)); }
     /* Hide scrollbar for clean UI but allow scrolling */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Drawer */
+    body.menu-open { overflow: hidden; }
   </style>
 </head>
 <body class="text-neutral-200 min-h-screen">
-  
+
+
   <div id="startup-error" style="display:none; color:white; background:#ef4444; padding:20px; text-align:center; direction:rtl; font-weight:bold; z-index:9999; position:fixed; top:0; left:0; right:0;">
     שגיאת מערכת: אנא נקה את מטמון הדפדפן ורענן את העמוד.
   </div>
 
+
   <div id="root"></div>
+
 
   <script type="text/babel" data-type="module">
     const { useState, useEffect, useMemo, Component } = React;
+
 
     class ErrorBoundary extends Component {
       constructor(props) {
@@ -71,9 +81,11 @@
       }
     }
 
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
@@ -85,26 +97,33 @@
       measurementId: "G-4QXV4Q37KH"
     };
 
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const databaseAppId = 'metallica-budapest-app';
 
+
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
+
 
     const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-    
+
+
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
     const bkkIOS = `https://apps.apple.com/app/id1589336495`;
     const bkkAndroid = `https://play.google.com/store/apps/details?id=hu.bkk.budapestgo`;
     const blsTickets = `https://jegy.rock1.hu/`;
 
+
     const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "פרנטיק (Frantic)", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
 
+
     const DEADLINE = new Date('2026-06-11T18:00:00+02:00'); 
-    
+
+
     const METALLICA_ALBUMS = [
       { title: "Kill 'Em All (1983)", songs: ["Hit the Lights", "The Four Horsemen", "Motorbreath", "Jump in the Fire", "(Anesthesia) - Pulling Teeth", "Whiplash", "Phantom Lord", "No Remorse", "Seek & Destroy", "Metal Militia"] },
       { title: "Ride the Lightning (1984)", songs: ["Fight Fire with Fire", "Ride the Lightning", "For Whom the Bell Tolls", "Fade to Black", "Trapped Under Ice", "Escape", "Creeping Death", "The Call of Ktulu"] },
@@ -119,11 +138,13 @@
       { title: "72 Seasons (2023)", songs: ["72 Seasons", "Shadows Follow", "Screaming Suicide", "Sleepwalk My Life Away", "You Must Burn!", "Lux Æterna", "Crown of Barbed Wire", "Chasing Light", "If Darkness Had a Son", "Too Far Gone?", "Room of Mirrors", "Inamorata"] }
     ];
 
+
     const PLACES = [
       { id: 'hotel', name: 'Mövenpick Hotel Budapest Centre', type: 'hotel', lat: 47.5023, lng: 19.0531, desc: 'בסיס האם של המשלחת', icon: 'fa-solid fa-hotel', color: 'text-yellow-400' },
       { id: 'stadium', name: 'אצטדיון פושקש', type: 'stadium', lat: 47.5030, lng: 19.0980, desc: 'מקום ההופעה (מטרו M2)', icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
       { id: 'bls', name: 'מועדון Barba Negra', type: 'concert', lat: 47.4526, lng: 19.0594, desc: 'הופעת BLS ב-10.6', icon: 'fa-solid fa-guitar', color: 'text-orange-500', hasTickets: true }
     ];
+
 
     const TAKEOVER_EVENTS = [
       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall\n10-14 ביוני\n(שעות יימסרו בהמשך)", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
@@ -134,6 +155,7 @@
       { id: 'disco', name: 'Fuel For The Night', type: 'party', lat: 47.4981, lng: 19.0543, desc: "Akvárium Klub\n12 ביוני, 22:00\nמסיבת מטאליקה ומטאל לתוך הלילה", icon: 'fa-solid fa-compact-disc', color: 'text-purple-400' }
     ];
 
+
     const ADMINS = [
       { name: 'Alon Carmel', wa: '972544860380' },
       { name: 'Doron Attias', wa: '972525830557' },
@@ -143,11 +165,13 @@
       { name: 'Nir Ben-Yair', wa: '972526224472' }
     ];
 
+
     const CURATED_BARS = [
       { name: 'Szimpla Kert', desc: 'ה-Ruin Bar המפורסם בעולם.' },
       { name: 'Instant-Fogas', desc: 'קומפלקס מסיבות ענק.' },
       { name: 'Liquid Rock', desc: 'בר רוק מעולה לחברים.' }
     ];
+
 
     const POI_CATEGORIES = {
       'nightlife': { label: 'חיי לילה 🍻', color: 'text-purple-300 bg-purple-900/30 border-purple-700/50' },
@@ -156,6 +180,7 @@
       'shopping': { label: 'קניות 🛍️', color: 'text-green-300 bg-green-900/30 border-green-700/50' },
       'other': { label: 'אחר 🎸', color: 'text-gray-300 bg-gray-800/50 border-gray-600/50' }
     };
+
 
     const EUROPEAN_TOUR_SHOWS = [
       "מינכן, גרמניה - מופע 1 (שישי)",
@@ -178,6 +203,7 @@
       "אחר (פרט בתיאור)"
     ];
 
+
     const TICKET_TYPES = [
       "Snake Pit 🐍",
       "פלטפורמות (Moth / Nothing Else)",
@@ -190,6 +216,7 @@
       "VIP / חבילת אירוח אחרת"
     ];
 
+
     function timeAgo(timestamp) {
       if (!timestamp) return '';
       const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -197,6 +224,7 @@
       const minutes = Math.floor(seconds / 60);
       return minutes < 60 ? `לפני ${minutes} דק'` : `לפני ${Math.floor(minutes/60)} שע'`;
     }
+
 
     function formatWhatsAppNumber(phone) {
       let cleaned = phone.replace(/\D/g, ''); 
@@ -208,10 +236,13 @@
       return cleaned;
     }
 
+
     function App() {
       const initialTab = new URLSearchParams(window.location.search).get('tab') || 'friends';
-      
+
+
       const [activeTab, setActiveTab] = useState(initialTab);
+      const [menuOpen, setMenuOpen] = useState(false);
       const [user, setUser] = useState(null);
       const [checkins, setCheckins] = useState([]);
       const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
@@ -223,10 +254,12 @@
       const [exchangeAmount, setExchangeAmount] = useState('100');
       const [fromCurrency, setFromCurrency] = useState('ILS');
       const [toCurrency, setToCurrency] = useState('HUF');
-      
+
+
       const [exchangeRates, setExchangeRates] = useState({ ILS: 1, EUR: 0.25, HUF: 98.0 });
       const [ratesStatus, setRatesStatus] = useState('מושך שערים מעודכנים...');
-      
+
+
       const [myPrediction, setMyPrediction] = useState(Array(16).fill(""));
       const [showSongPicker, setShowSongPicker] = useState(null);
       const [songSearchLocal, setSongSearchLocal] = useState('');
@@ -236,15 +269,18 @@
       const [officialSetlist, setOfficialSetlist] = useState(null);
       const [allPredictions, setAllPredictions] = useState([]);
 
+
       const [communityBars, setCommunityBars] = useState([]);
       const [showAddBarForm, setShowAddBarForm] = useState(false);
       const [newBarName, setNewBarName] = useState('');
       const [newBarDesc, setNewBarDesc] = useState('');
       const [newBarCategory, setNewBarCategory] = useState('nightlife'); 
 
+
       const [secretClicks, setSecretClicks] = useState(0);
       const [isAdmin, setIsAdmin] = useState(false);
       const [adminInput, setAdminInput] = useState('');
+
 
       const [tickets, setTickets] = useState([]);
       const [showTicketForm, setShowTicketForm] = useState(false);
@@ -255,6 +291,12 @@
       const [ticketPhone, setTicketPhone] = useState('');
       const [ticketDesc, setTicketDesc] = useState('');
 
+
+      useEffect(() => {
+        document.body.classList.toggle('menu-open', menuOpen);
+        return () => document.body.classList.remove('menu-open');
+      }, [menuOpen]);
+
       useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
           if (currentUser) setUser(currentUser);
@@ -262,6 +304,7 @@
         });
         return () => unsubscribe();
       }, []);
+
 
       useEffect(() => {
         const fetchRates = async () => {
@@ -283,6 +326,7 @@
         };
         fetchRates();
       }, []);
+
 
       useEffect(() => {
         const checkTime = () => {
@@ -308,6 +352,7 @@
         return () => clearInterval(timer);
       }, []);
 
+
       useEffect(() => {
         if (!user) return;
         const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
@@ -317,6 +362,7 @@
         });
       }, [user]);
 
+
       useEffect(() => {
         const barsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'community_bars');
         return onSnapshot(barsRef, (snapshot) => {
@@ -325,6 +371,7 @@
         });
       }, []);
 
+
       useEffect(() => {
         const ticketsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'tickets');
         return onSnapshot(ticketsRef, (snapshot) => {
@@ -332,6 +379,7 @@
           setTickets(data.sort((a, b) => b.timestamp - a.timestamp));
         });
       }, []);
+
 
       useEffect(() => {
         if (!user || user.isAnonymous) return;
@@ -342,6 +390,7 @@
           }
         });
       }, [user]);
+
 
       useEffect(() => {
         const setlistRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'admin', 'setlist');
@@ -362,6 +411,7 @@
         });
       }, []);
 
+
       useEffect(() => {
         const predsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'predictions');
         return onSnapshot(predsRef, (snapshot) => {
@@ -369,6 +419,7 @@
            setAllPredictions(data);
         });
       }, []);
+
 
       const leaderboard = useMemo(() => {
         if (!officialSetlist || allPredictions.length === 0) return [];
@@ -391,6 +442,7 @@
         }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
 
+
       const handleGoogleLogin = async () => {
         setErrorMsg('');
         if (isWhatsAppOrInApp) {
@@ -405,10 +457,12 @@
         }
       };
 
+
       const handleLogout = async () => {
         await signOut(auth);
         window.location.reload(); 
       };
+
 
       const handleLogoClick = () => {
         setSecretClicks(prev => {
@@ -421,6 +475,7 @@
           return next;
         });
       };
+
 
       const handlePublishSetlist = async () => {
         if (!adminInput.trim() || !user) return;
@@ -438,6 +493,7 @@
         }
         setIsSaving(false);
       };
+
 
       const handleCheckIn = async () => {
         if (!user) return;
@@ -457,6 +513,7 @@
         setIsSaving(false);
       };
 
+
       const handleDeleteLocation = async () => {
         if (!user) return;
         setIsSaving(true);
@@ -467,6 +524,7 @@
         } catch (e) { console.error(e); }
         setIsSaving(false);
       };
+
 
       const handleAddCommunityBar = async () => {
         if (!user || user.isAnonymous) {
@@ -498,6 +556,7 @@
         setIsSaving(false);
       };
 
+
       const handleDeleteCommunityBar = async (barId) => {
         if (!window.confirm("בטוח שברצונך למחוק המלצה זו?")) return;
         try {
@@ -507,6 +566,7 @@
           alert("שגיאת הרשאות! לא ניתן למחוק את ההמלצה.");
         }
       };
+
 
       const handleAddTicket = async () => {
         if (!user || user.isAnonymous) {
@@ -541,6 +601,7 @@
         setIsSaving(false);
       };
 
+
       const handleDeleteTicket = async (ticketId) => {
         if (!window.confirm("למחוק את המודעה?")) return;
         try {
@@ -550,6 +611,7 @@
           alert("שגיאת הרשאות!");
         }
       };
+
 
       const handleSavePrediction = async () => {
         if (isLocked) {
@@ -561,7 +623,8 @@
             return;
         }
         if (!user || user.isAnonymous) return;
-        
+
+
         setIsSaving(true);
         setErrorMsg('');
         setSaveSuccessMsg('');
@@ -586,15 +649,18 @@
         setIsSaving(false);
       };
 
+
       const handleDeletePrediction = async () => {
         if (isLocked) return;
         if (!window.confirm("בטוח שברצונך למחוק את הניחוש לצמיתות? פעולה זו תסיר אותך מהתחרות.")) return;
-        
+
+
         if (!user || user.isAnonymous) {
             setMyPrediction(Array(16).fill(""));
             return;
         }
-        
+
+
         setIsSaving(true);
         setErrorMsg('');
         setSaveSuccessMsg('');
@@ -610,12 +676,14 @@
         setIsSaving(false);
       };
 
+
       const convertCurrency = () => {
           const amt = parseFloat(exchangeAmount);
           if (isNaN(amt)) return '0';
           const result = (amt / exchangeRates[fromCurrency]) * exchangeRates[toCurrency];
           return toCurrency === 'HUF' ? Math.round(result).toLocaleString() : result.toFixed(2);
       };
+
 
       const checkinsByZone = useMemo(() => {
         const grouped = {};
@@ -624,14 +692,17 @@
         return grouped;
       }, [checkins]);
 
+
       return (
         <div className="min-h-screen flex flex-col relative pb-safe max-w-lg mx-auto shadow-2xl">
-          
+
+
           {isWhatsAppOrInApp && (
             <div className="bg-red-600 text-white p-3 text-center text-sm font-bold z-50 sticky top-0 shadow-lg">
                 ⚠️ פתח ב-Chrome/Safari כדי להתחבר לחשבון!
             </div>
           )}
+
 
           <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
@@ -649,14 +720,20 @@
                   </h1>
                 </div>
               </div>
-              {!user?.isAnonymous && user && (
-                <button onClick={handleLogout} className="text-blue-300 p-2 hover:text-white transition shrink-0"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
-              )}
+              <button 
+                onClick={() => setMenuOpen(true)} 
+                aria-label="פתח תפריט"
+                className="text-blue-200 hover:text-white p-2 -ml-2 shrink-0 active:scale-90 transition"
+              >
+                <i className="fa-solid fa-bars text-2xl"></i>
+              </button>
             </div>
           </header>
 
+
           <main className="p-4 flex-1 relative z-10 overflow-y-auto">
-            
+
+
             {activeTab === 'friends' && (
               <div className="space-y-5">
                 <div className="bg-black/60 border border-blue-900/50 rounded-2xl p-6 shadow-xl">
@@ -693,6 +770,7 @@
                   )}
                 </div>
 
+
                 <div className="bg-green-950/30 border border-green-800/40 rounded-2xl p-5 shadow-lg">
                   <h3 className="font-bold text-white mb-3 flex items-center gap-2">
                     <i className="fa-brands fa-whatsapp text-green-500 text-xl"></i>
@@ -709,6 +787,7 @@
                     </button>
                   </div>
 
+
                   <div className="mt-5 pt-4 border-t border-green-800/50">
                     <p className="text-xs text-green-400 mb-3 font-bold"><i className="fa-solid fa-user-shield ml-1"></i> צוות האדמינים (לכל שאלה):</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -721,6 +800,7 @@
                     </div>
                   </div>
                 </div>
+
 
                 {/* --- אזור חדש: גלריית תמונות משותפת --- */}
                 <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/40 border border-blue-700/50 rounded-2xl p-5 shadow-lg">
@@ -736,6 +816,7 @@
                     כניסה לאלבום המשותף
                   </button>
                 </div>
+
 
                 <div className="space-y-4">
                   {STADIUM_ZONES.map(zone => {
@@ -763,6 +844,7 @@
               </div>
             )}
 
+
             {activeTab === 'map' && (
               <div className="space-y-4 animate-in fade-in">
                 {PLACES.map(p => (
@@ -784,14 +866,16 @@
                 ))}
               </div>
             )}
-            
+
+
             {activeTab === 'takeover' && (
               <div className="space-y-4 animate-in fade-in">
                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-6 mb-6">
                   <h2 className="text-xl font-bold text-yellow-400 mb-2"><i className="fa-solid fa-meteor mr-2"></i>Metallica Takeover</h2>
                   <p className="text-sm text-gray-300">ריכוז האירועים הרשמיים סביב ההופעות (מעודכן לפי פרסומי הלהקה).</p>
                 </div>
-                
+
+
                 {TAKEOVER_EVENTS.map(p => (
                   <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-5 flex gap-4 items-center shadow-lg relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
@@ -808,6 +892,7 @@
               </div>
             )}
 
+
             {/* --- הלשונית: לוח כרטיסים --- */}
             {activeTab === 'tickets' && (
               <div className="space-y-4 animate-in fade-in">
@@ -816,7 +901,8 @@
                   <p className="text-sm text-gray-300">
                     מחפש כרטיס או נתקעת עם אחד מיותר לכל עיר באירופה? פרסם כאן וחברי המועדון יוכלו ליצור איתך קשר ישירות בוואטסאפ.
                   </p>
-                  
+
+
                   {(!user || user.isAnonymous) ? (
                     <button onClick={handleGoogleLogin} className="mt-4 w-full bg-white hover:bg-gray-200 text-black font-bold py-2 rounded-xl transition inline-flex justify-center items-center gap-2">
                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
@@ -829,10 +915,12 @@
                   )}
                 </div>
 
+
                 {showTicketForm && user && !user.isAnonymous && (
                   <div className="bg-blue-950/30 p-5 rounded-2xl border border-blue-800/50 shadow-xl mb-6">
                     <h3 className="font-bold text-white mb-4">פרטי הכרטיס למכירה:</h3>
-                    
+
+
                     <div className="space-y-3">
                       <div>
                         <label className="text-xs text-blue-300 block mb-1">הופעה / עיר:</label>
@@ -841,12 +929,14 @@
                         </select>
                       </div>
 
+
                       <div>
                         <label className="text-xs text-blue-300 block mb-1">סוג כרטיס ומיקום:</label>
                         <select value={ticketType} onChange={e => setTicketType(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none">
                           {TICKET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
                       </div>
+
 
                       <div className="flex gap-3">
                         <div className="flex-1">
@@ -861,16 +951,19 @@
                         </div>
                       </div>
 
+
                       <div>
                         <label className="text-xs text-blue-300 block mb-1">טלפון ליצירת קשר (לוואטסאפ):</label>
                         <input type="tel" placeholder="05X-XXXXXXX" value={ticketPhone} onChange={e => setTicketPhone(e.target.value)} dir="ltr" className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none text-right" />
                       </div>
+
 
                       <div>
                         <label className="text-xs text-blue-300 block mb-1">הערות (אופציונלי):</label>
                         <input type="text" placeholder="לדוגמה: מוכר כי החברה לא יכולה לטוס" value={ticketDesc} onChange={e => setTicketDesc(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
                       </div>
                     </div>
+
 
                     <div className="flex gap-2 mt-5">
                       <button onClick={handleAddTicket} disabled={isSaving || !ticketPrice.trim() || !ticketPhone.trim()} className="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold text-white transition active:scale-95 disabled:opacity-50">
@@ -880,6 +973,7 @@
                     </div>
                   </div>
                 )}
+
 
                 <div className="space-y-4">
                   {tickets.length === 0 ? (
@@ -912,9 +1006,11 @@
                                 </div>
                               </div>
                             </div>
-                            
+
+
                             {ticket.desc && <p className="text-sm text-gray-400 mb-4 bg-gray-900/50 p-2 rounded-lg border border-gray-800">{ticket.desc}</p>}
-                            
+
+
                             <div className="flex justify-between items-center mt-2 border-t border-gray-800 pt-3">
                               <span className="text-xs text-gray-500"><i className="fa-solid fa-user ml-1"></i> מוכר/ת: {ticket.sellerName}</span>
                               <a href={`https://wa.me/${ticket.phone}`} target="_blank" rel="noreferrer" className="bg-[#25D366] hover:bg-[#1ebd57] text-black text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 transition active:scale-95 shadow-md">
@@ -928,6 +1024,7 @@
                   )}
                 </div>
 
+
                 {/* --- הערה משפטית --- */}
                 <div className="mt-8 bg-red-900/10 border border-red-900/30 rounded-xl p-4 text-center">
                   <p className="text-[10px] text-gray-400 leading-relaxed">
@@ -937,8 +1034,10 @@
                   </p>
                 </div>
 
+
               </div>
             )}
+
 
             {activeTab === 'transport' && (
               <div className="space-y-4">
@@ -946,10 +1045,12 @@
                   <h2 className="text-xl font-bold text-white mb-2"><i className="fa-solid fa-train-subway text-red-500 mr-2"></i>Ride the Lightning (המטרו של בודפשט)</h2>
                   <p className="text-sm text-gray-300">הדרך המהירה לאצטדיון. רדו בתחנת <strong>Puskás Ferenc Stadion</strong>.</p>
                 </div>
-                
+
+
                 <h2 className="text-xl font-bold text-white mb-2 mt-6"><i className="fa-solid fa-gauge-high text-yellow-500 mr-2"></i>Motorbreath (רכבים ותחבורה)</h2>
                 <div className="grid grid-cols-2 gap-4">
-                  
+
+
                   <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
                     <i className="fa-solid fa-car text-3xl text-yellow-500 mb-2"></i>
                     <h4 className="font-bold text-white text-lg mb-4">Bolt</h4>
@@ -962,6 +1063,7 @@
                         </button>
                     </div>
                   </div>
+
 
                   <div className="bg-black/60 p-4 rounded-2xl text-center border border-gray-800 flex flex-col items-center shadow-lg">
                     <i className="fa-solid fa-ticket text-3xl text-blue-400 mb-2"></i>
@@ -976,7 +1078,9 @@
                     </div>
                   </div>
 
+
                 </div>
+
 
                 {/* --- אזור: תקשורת וגלישה בחו"ל --- */}
                 <h2 className="text-xl font-bold text-white mb-2 mt-6 pt-6 border-t border-gray-800"><i className="fa-solid fa-wifi text-blue-400 mr-2"></i>Call of Ktulu (אינטרנט בחו"ל)</h2>
@@ -1002,8 +1106,10 @@
                   </button>
                 </div>
 
+
               </div>
             )}
+
 
             {activeTab === 'currency' && (
               <div className="bg-black/80 border border-gray-800 rounded-2xl p-6 text-center shadow-2xl">
@@ -1027,13 +1133,16 @@
                     </select>
                   </div>
                 </div>
-                
+
+
                 <div className="mt-6 pt-4 border-t border-gray-800">
                   <p className="text-[11px] text-gray-500 font-bold">{ratesStatus}</p>
                 </div>
-                
+
+
               </div>
             )}
+
 
             {activeTab === 'bars' && (
               <div className="space-y-6">
@@ -1049,7 +1158,8 @@
                     ))}
                   </div>
                 </div>
-                
+
+
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold text-white border-b border-gray-800 pb-2">Whiskey in the Jar (איפה שותים?)</h2>
                   {CURATED_BARS.map(item => (
@@ -1060,6 +1170,7 @@
                   ))}
                 </div>
 
+
                 <div className="space-y-4 pt-4 mt-6 border-t border-purple-900/50">
                   <div className="flex justify-between items-center mb-2">
                     <h2 className="text-lg font-bold text-purple-400">המלצות מהמשלחת (קהילה)</h2>
@@ -1069,6 +1180,7 @@
                       <button onClick={() => setShowAddBarForm(!showAddBarForm)} className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg font-bold shadow-md active:scale-95 transition">הוסף מקום <i className="fa-solid fa-plus ml-1"></i></button>
                     )}
                   </div>
+
 
                   {showAddBarForm && user && !user.isAnonymous && (
                     <div className="bg-purple-950/30 p-4 rounded-xl border border-purple-800/50 animate-in fade-in">
@@ -1086,6 +1198,7 @@
                     </div>
                   )}
 
+
                   {communityBars.length === 0 ? (
                     <div className="text-center p-4 bg-black/40 rounded-xl border border-gray-800">
                       <p className="text-sm text-gray-500">עדיין אין המלצות מהחברים. תהיו הראשונים!</p>
@@ -1095,6 +1208,7 @@
                       {communityBars.map(bar => {
                         const catInfo = POI_CATEGORIES[bar.category] || POI_CATEGORIES['other'];
                         const isOwnerOrAdmin = (user && user.uid === bar.userId) || isAdmin;
+
 
                         return (
                           <div key={bar.id} className="bg-black/60 border border-purple-900/30 rounded-2xl p-4 flex flex-col shadow-lg">
@@ -1130,8 +1244,10 @@
                   )}
                 </div>
 
+
               </div>
             )}
+
 
             {activeTab === 'game' && (
               <div className="space-y-4 animate-in fade-in">
@@ -1147,6 +1263,7 @@
                     <div className="text-[10px] sm:text-xs bg-black/40 p-2 rounded-lg inline-block text-gray-400 mb-6">
                       בול בפגיעה (מיקום נכון) = <strong className="text-yellow-500">5 נק'</strong> | שיר נכון במיקום אחר = <strong className="text-blue-400">2 נק'</strong>
                     </div>
+
 
                     <div className="space-y-3">
                       {leaderboard.map((u, idx) => (
@@ -1177,12 +1294,14 @@
                     <p className="text-sm text-gray-300 mb-4">
                       Build your own Battery! נחשו אילו 16 שירים ירעידו את בודפשט, הוכיחו שאתם Master of Puppets וזכו בתהילת עולם.
                     </p>
-                    
+
+
                     <div className="text-[10px] sm:text-xs bg-black/40 p-3 rounded-xl border border-gray-700 text-gray-300 mb-6">
                       <strong className="text-purple-300">חוקי הניקוד:</strong><br/>
                       בול בפגיעה (שיר נכון במיקום המדויק) = <strong className="text-yellow-500">5 נקודות</strong><br/>
                       שיר בסטליסט אבל במיקום אחר = <strong className="text-blue-400">2 נקודות</strong>
                     </div>
+
 
                     <div className={`mb-6 p-3 rounded-xl border text-center font-bold shadow-lg transition-colors ${isLocked ? 'bg-red-900/60 border-red-500 text-red-200' : 'bg-purple-900/50 border-purple-500 text-purple-200'}`}>
                       {isLocked ? (
@@ -1194,6 +1313,7 @@
                         </>
                       )}
                     </div>
+
 
                     {(!user || user.isAnonymous) ? (
                       <div className="text-center bg-black/50 p-4 rounded-xl">
@@ -1208,6 +1328,7 @@
                         {saveSuccessMsg && <div className="bg-green-600/80 border border-green-400 text-white p-3 rounded-xl text-center text-sm font-bold">{saveSuccessMsg}</div>}
                         {errorMsg && <div className="bg-red-600/80 border border-red-400 text-white p-3 rounded-xl text-center text-sm font-bold">{errorMsg}</div>}
 
+
                         <div className="flex justify-between items-center mb-2 px-1">
                           <span className="text-sm font-bold text-purple-300">הבחירות שלך:</span>
                           {!isLocked && (
@@ -1220,6 +1341,7 @@
                             </button>
                           )}
                         </div>
+
 
                         <div className="grid grid-cols-1 gap-2">
                           {myPrediction.map((song, idx) => (
@@ -1237,6 +1359,7 @@
                           ))}
                         </div>
 
+
                         <button 
                           onClick={handleSavePrediction}
                           disabled={isLocked || isSaving}
@@ -1247,7 +1370,8 @@
                         </button>
                       </div>
                     )}
-                    
+
+
                     <div className="mt-8 pt-6 border-t border-purple-900/50">
                       <h3 className="font-bold text-purple-300 mb-3 flex items-center gap-2">
                         <i className="fa-solid fa-users"></i> {allPredictions.length} חברים כבר שלחו ניחוש:
@@ -1267,6 +1391,7 @@
                   </div>
                 )}
 
+
                 {showSongPicker !== null && (
                   <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col p-4 backdrop-blur-md animate-in fade-in">
                     <div className="flex justify-between items-center mb-4 pt-safe">
@@ -1275,7 +1400,8 @@
                         <i className="fa-solid fa-times"></i>
                       </button>
                     </div>
-                    
+
+
                     <input 
                       type="text" 
                       placeholder="Search song..." 
@@ -1285,10 +1411,12 @@
                       dir="ltr"
                     />
 
+
                     <div className="flex-1 overflow-y-auto space-y-4 pb-safe relative">
                       {METALLICA_ALBUMS.map(album => {
                         const filteredSongs = album.songs.filter(s => s.toLowerCase().includes(songSearchLocal.toLowerCase()));
                         if (filteredSongs.length === 0) return null;
+
 
                         return (
                           <div key={album.title} className="mb-2">
@@ -1328,6 +1456,7 @@
               </div>
             )}
 
+
             {activeTab === 'admin' && isAdmin && (
               <div className="space-y-4 animate-in fade-in">
                 <div className="bg-red-900/20 border border-red-500/50 rounded-2xl p-6 shadow-xl text-center">
@@ -1338,7 +1467,8 @@
                   <p className="text-sm text-gray-300 mb-4">
                     הדבק כאן את הסטליסט האמיתי מההופעה (טקסט חופשי). המערכת תנקה את המספרים ותפרסם לכולם את טבלת המובילים!
                   </p>
-                  
+
+
                   <textarea 
                     value={adminInput}
                     onChange={(e) => setAdminInput(e.target.value)}
@@ -1346,7 +1476,8 @@
                     className="w-full h-64 bg-black/60 border border-red-800 rounded-xl p-4 text-white outline-none focus:border-red-500 mb-4"
                     dir="ltr"
                   />
-                  
+
+
                   <button 
                     onClick={handlePublishSetlist}
                     disabled={isSaving || !adminInput.trim()}
@@ -1359,51 +1490,132 @@
               </div>
             )}
 
+
           </main>
 
-          <nav className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50 overflow-x-auto scrollbar-hide">
-            <div className="max-w-lg mx-auto flex justify-between px-1 py-2 mb-safe min-w-max md:min-w-0">
+
+          {/* === Drawer Backdrop === */}
+          <div 
+            onClick={() => setMenuOpen(false)}
+            className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] transition-opacity duration-300 ${menuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          ></div>
+
+          {/* === Hamburger Drawer Menu === */}
+          <aside 
+            className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-gradient-to-b from-gray-950 to-black border-l border-blue-900/50 z-[70] shadow-2xl transition-transform duration-300 ease-out flex flex-col ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            style={{ direction: 'rtl' }}
+          >
+            {/* Drawer Header */}
+            <div className="bg-gradient-to-b from-blue-900/80 to-black p-5 border-b border-blue-900/50 relative">
+              <button 
+                onClick={() => setMenuOpen(false)} 
+                aria-label="סגור תפריט"
+                className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/50 text-gray-300 hover:text-white hover:bg-black/70 flex items-center justify-center transition active:scale-90"
+              >
+                <i className="fa-solid fa-times"></i>
+              </button>
+
+              <div className="flex items-center gap-3 mt-2">
+                <img 
+                  src="./logo.jpg" 
+                  className="w-14 h-14 rounded-full border-2 border-blue-400 object-cover lightning-glow shrink-0" 
+                  alt="Logo"
+                  onError={(e) => { e.target.style.display='none'; }}
+                />
+                <div className="flex-1 overflow-hidden">
+                  {user && !user.isAnonymous ? (
+                    <>
+                      <p className="text-white font-bold text-sm truncate">{user.displayName}</p>
+                      <p className="text-blue-300 text-[11px] truncate">{user.email}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-white font-bold text-sm">Chapter 491</p>
+                      <p className="text-blue-300 text-[11px]">Goes to Budapest 🇭🇺</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Menu Items */}
+            <nav className="flex-1 overflow-y-auto py-3">
               {[
-                { id: 'friends', icon: 'fa-street-view', label: 'רדאר' },
-                { id: 'takeover', icon: 'fa-meteor', label: 'Takeover' },
-                { id: 'game', icon: 'fa-clipboard-list', label: 'ניחושים', highlight: true },
-                { id: 'tickets', icon: 'fa-ticket', label: 'כרטיסים' },
-                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות' },
-                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה' },
-                { id: 'currency', icon: 'fa-money-bill-transfer', label: 'המרה' },
-                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים' }
-              ].map(tab => (
-                <button 
-                   key={tab.id} 
-                   onClick={() => setActiveTab(tab.id)} 
-                   className={`flex flex-col items-center justify-center px-3 py-2 mx-1 rounded-xl transition-all flex-1 min-w-[60px] 
-                   ${activeTab === tab.id 
-                      ? (tab.highlight ? 'text-purple-400 bg-purple-900/20' : 'text-blue-400 bg-blue-900/20') 
-                      : (tab.highlight ? 'text-purple-400 opacity-80 hover:opacity-100 hover:bg-purple-900/10' : 'text-gray-500 hover:text-gray-300')
-                   }`}
-                >
-                  <i className={`fa-solid ${tab.icon} text-lg md:text-xl mb-1`}></i>
-                  <span className="text-[10px] font-bold whitespace-nowrap">{tab.label}</span>
-                </button>
-              ))}
-              
+                { id: 'friends', icon: 'fa-street-view', label: 'רדאר חברים', color: 'text-blue-400' },
+                { id: 'takeover', icon: 'fa-meteor', label: 'Metallica Takeover', color: 'text-yellow-400' },
+                { id: 'game', icon: 'fa-clipboard-list', label: 'משחק הניחושים', color: 'text-purple-400', highlight: true },
+                { id: 'tickets', icon: 'fa-ticket', label: 'לוח כרטיסים', color: 'text-blue-400' },
+                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות ומיקומים', color: 'text-green-400' },
+                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה ואינטרנט', color: 'text-red-400' },
+                { id: 'currency', icon: 'fa-money-bill-transfer', label: 'מחשבון המרה', color: 'text-green-400' },
+                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים והמלצות', color: 'text-orange-400' }
+              ].map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button 
+                    key={tab.id} 
+                    onClick={() => { setActiveTab(tab.id); setMenuOpen(false); }} 
+                    className={`w-full flex items-center gap-4 px-5 py-3.5 transition-all relative ${
+                      isActive 
+                        ? 'bg-blue-900/30 text-white' 
+                        : 'text-gray-300 hover:bg-white/5 active:bg-white/10'
+                    }`}
+                  >
+                    {isActive && <div className="absolute right-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-full"></div>}
+                    <i className={`fa-solid ${tab.icon} text-xl w-6 text-center ${isActive ? tab.color : 'text-gray-500'}`}></i>
+                    <span className={`text-sm flex-1 text-right ${isActive ? 'font-bold' : 'font-medium'}`}>{tab.label}</span>
+                    {tab.highlight && !isActive && (
+                      <span className="text-[9px] bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded-full border border-purple-700/50">חדש</span>
+                    )}
+                  </button>
+                );
+              })}
+
               {isAdmin && (
-                <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center justify-center px-3 py-2 mx-1 rounded-xl transition-all flex-1 min-w-[60px] ${activeTab === 'admin' ? 'text-red-400 bg-red-900/20' : 'text-red-900 hover:text-red-400'}`}>
-                  <i className="fa-solid fa-user-secret text-lg md:text-xl mb-1"></i>
-                  <span className="text-[10px] font-bold whitespace-nowrap">אדמין</span>
+                <button 
+                  onClick={() => { setActiveTab('admin'); setMenuOpen(false); }} 
+                  className={`w-full flex items-center gap-4 px-5 py-3.5 transition-all relative ${
+                    activeTab === 'admin'
+                      ? 'bg-red-900/30 text-white' 
+                      : 'text-gray-300 hover:bg-white/5'
+                  }`}
+                >
+                  {activeTab === 'admin' && <div className="absolute right-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-full"></div>}
+                  <i className={`fa-solid fa-user-secret text-xl w-6 text-center ${activeTab === 'admin' ? 'text-red-400' : 'text-red-900'}`}></i>
+                  <span className={`text-sm flex-1 text-right ${activeTab === 'admin' ? 'font-bold' : 'font-medium'}`}>פאנל אדמין</span>
                 </button>
               )}
+
+              {/* Account section */}
+              {user && !user.isAnonymous && (
+                <>
+                  <div className="border-t border-gray-800 my-3"></div>
+                  <button 
+                    onClick={() => { handleLogout(); setMenuOpen(false); }} 
+                    className="w-full flex items-center gap-4 px-5 py-3.5 text-gray-400 hover:bg-white/5 hover:text-red-400 transition"
+                  >
+                    <i className="fa-solid fa-right-from-bracket text-xl w-6 text-center"></i>
+                    <span className="text-sm flex-1 text-right font-medium">התנתק מהחשבון</span>
+                  </button>
+                </>
+              )}
+            </nav>
+
+            {/* Drawer Footer */}
+            <div className="border-t border-gray-800 p-4 text-center bg-black/40">
+              <p className="text-[10px] text-gray-500">
+                <i className="fa-solid fa-bolt text-blue-500 mr-1"></i>
+                Chapter 491 · Budapest 2026
+              </p>
             </div>
-          </nav>
+          </aside>
         </div>
       );
     }
+
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<ErrorBoundary><App /></ErrorBoundary>);
   </script>
 </body>
 </html>
-
-
-```
