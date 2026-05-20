@@ -118,7 +118,29 @@
     const blsTickets = `https://jegy.rock1.hu/`;
 
 
-    const STADIUM_ZONES = ["Snake Pit", "פלטפורמה", "פרנטיק (Frantic)", "דשא צמוד לבמה", "דשא עמידה (GA)", "יציע 100", "יציע 200", "יציע 300", "מתחם אוכל", "בדרך לאצטדיון"];
+    // Stadium zones matching the official M72 ticket categories
+    const STADIUM_ZONES = [
+      "Snake Pit 🐍",
+      "פלטפורמה (Moth / Nothing Else)",
+      "פרנטיק (Frantic Early Entry)",
+      "דשא עמידה (GA)",
+      "יציע 100 (Seek & Destroy)",
+      "יציע 200",
+      "יציע 300",
+      "מתחם אוכל",
+      "בדרך לאצטדיון"
+    ];
+
+    // Map old/deprecated zone names → new canonical names.
+    // (Snake Pit is a valid zone — not migrated.)
+    const ZONE_MIGRATIONS = {
+      "Snake Pit": "Snake Pit 🐍",
+      "דשא צמוד לבמה": "פרנטיק (Frantic Early Entry)",
+      "פרנטיק (Frantic)": "פרנטיק (Frantic Early Entry)",
+      "פלטפורמה": "פלטפורמה (Moth / Nothing Else)",
+      "יציע 100": "יציע 100 (Seek & Destroy)"
+    };
+    const migrateZone = (zone) => ZONE_MIGRATIONS[zone] || zone;
 
 
     const DEADLINE = new Date('2026-06-11T18:00:00+02:00'); 
@@ -361,6 +383,22 @@
           setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
         });
       }, [user]);
+
+      // Auto-migrate the current user's own check-in if it sits on a deprecated zone.
+      // (Only the owner can write their own doc, so we migrate silently and per-user.)
+      useEffect(() => {
+        if (!user || !checkins.length) return;
+        const own = checkins.find(c => c.id === user.uid);
+        if (!own || !own.zone) return;
+        const migrated = migrateZone(own.zone);
+        if (migrated !== own.zone) {
+          setDoc(
+            doc(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins', user.uid),
+            { ...own, zone: migrated },
+            { merge: true }
+          ).catch(err => console.warn('Zone migration failed:', err));
+        }
+      }, [user, checkins]);
 
 
       useEffect(() => {
@@ -688,7 +726,10 @@
       const checkinsByZone = useMemo(() => {
         const grouped = {};
         STADIUM_ZONES.forEach(z => grouped[z] = []);
-        checkins.forEach(c => { if(grouped[c.zone]) grouped[c.zone].push(c); });
+        checkins.forEach(c => {
+          const migrated = migrateZone(c.zone);
+          if (grouped[migrated]) grouped[migrated].push(c);
+        });
         return grouped;
       }, [checkins]);
 
