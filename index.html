@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
 
+  <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Metallica HU">
@@ -102,7 +103,6 @@
     const bkkAndroid = `https://play.google.com/store/apps/details?id=hu.bkk.budapestgo`;
     const blsTickets = `https://jegy.rock1.hu/`;
 
-    // Stadium zones matching the official M72 ticket categories
     const STADIUM_ZONES = [
       "Snake Pit 🐍",
       "פלטפורמה",
@@ -115,8 +115,6 @@
       "בדרך לאצטדיון"
     ];
 
-    // Map old/deprecated zone names → new canonical names.
-    // (Snake Pit is a valid zone — not migrated.)
     const ZONE_MIGRATIONS = {
       "Snake Pit": "Snake Pit 🐍",
       "דשא צמוד לבמה": "פרנטיק (Frantic Early Entry)",
@@ -149,7 +147,7 @@
     ];
 
     const TAKEOVER_EVENTS = [
-      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Center (G018 - קומת קרקע)\n10-13 ביוני | 08:30 - 20:00\n14 ביוני | 08:30 - 18:00", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
+      { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall (G018 - קומת קרקע)\n10-13 ביוני | 08:30 - 20:00\n14 ביוני | 08:30 - 18:00", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
       { id: 'blood', name: 'תרומת דם - הצלב האדום', type: 'charity', lat: 47.5028, lng: 19.1039, desc: "Budapest Aréna\n11 ביוני: 09:00-17:00\n12 ביוני: 09:00-19:00", icon: 'fa-solid fa-hand-holding-droplet', color: 'text-red-500' },
       { id: 'film', name: 'פסטיבל סרטי מטאליקה', type: 'movie', lat: 47.4990, lng: 19.0967, desc: "Cinema City Aréna\n12 ביוני, 14:00\nCliff 'Em All / Cunning Stunts ועוד", icon: 'fa-solid fa-film', color: 'text-gray-300' },
       { id: 'tribute', name: '...And Tributes for All!', type: 'concert', lat: 47.4526, lng: 19.0594, desc: "Barba Negra\n12 ביוני, 14:00-22:00\nמופעי מחווה למטאליקה, פנטרה וגוז'ירה", icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
@@ -211,6 +209,23 @@
       "יציע עליון (Upper Tier)",
       "כרטיס משולב ליומיים (2-Day Pass)",
       "VIP / חבילת אירוח אחרת"
+    ];
+
+    const FORBIDDEN_ITEMS = [
+      "אוכל", "משקאות", "סמים", "מטריות", "תיקים גדולים", 
+      "מצלמות אקסטרים", "רחפנים", "מוטות סלפי", "ציוד הקלטה (אודיו/וידאו)", 
+      "כלי נשק", "מצביעי לייזר", "אופניים", "קטנועים"
+    ];
+
+    const MENU_TABS = [
+      { id: 'friends', icon: 'fa-street-view', label: 'רדאר חברים' },
+      { id: 'takeover', icon: 'fa-meteor', label: 'Metallica Takeover' },
+      { id: 'game', icon: 'fa-clipboard-list', label: 'תחרות הסטליסט', highlight: true },
+      { id: 'tickets', icon: 'fa-ticket', label: 'לוח כרטיסים אירופי' },
+      { id: 'map', icon: 'fa-map-location-dot', label: 'מפות ומיקומים' },
+      { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה ותקשורת' },
+      { id: 'currency', icon: 'fa-money-bill-transfer', label: 'מחשבון המרה פנימי' },
+      { id: 'bars', icon: 'fa-beer-mug-empty', label: 'מדריך בילויים' }
     ];
 
     function timeAgo(timestamp) {
@@ -347,7 +362,6 @@
       }, [user]);
 
       // Auto-migrate the current user's own check-in if it sits on a deprecated zone.
-      // (Only the owner can write their own doc, so we migrate silently and per-user.)
       useEffect(() => {
         if (!user || !checkins.length) return;
         const own = checkins.find(c => c.id === user.uid);
@@ -435,6 +449,12 @@
           return { ...pred, score, exactMatches, partialMatches };
         }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
+
+      // מוצא את הצ'ק-אין של המשתמש המחובר אם קיים
+      const myCheckin = useMemo(() => {
+        if (!user) return null;
+        return checkins.find(c => c.id === user.uid) || null;
+      }, [checkins, user]);
 
       const handleGoogleLogin = async () => {
         setErrorMsg('');
@@ -673,10 +693,10 @@
       }, [checkins]);
 
       return (
-        <div className="min-h-screen flex flex-col relative pb-safe max-w-lg mx-auto shadow-2xl">
+        <div className="min-h-screen flex flex-col relative pb-safe max-w-lg mx-auto shadow-2xl overflow-x-hidden">
 
           {isWhatsAppOrInApp && (
-            <div className="bg-red-600 text-white p-3 text-center text-sm font-bold z-50 sticky top-0 shadow-lg">
+            <div className="bg-red-600 text-white p-3 text-center text-sm font-bold z-[100] sticky top-0 shadow-lg">
                 ⚠️ פתח ב-Chrome/Safari כדי להתחבר לחשבון!
             </div>
           )}
@@ -684,10 +704,13 @@
           <header className="bg-gradient-to-b from-blue-900/90 to-black backdrop-blur-md border-b border-blue-900 p-4 sticky top-0 z-40">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 overflow-hidden">
+                <button onClick={() => setMenuOpen(true)} className="text-white text-2xl pr-1 pl-3 active:scale-90 transition outline-none">
+                  <i className="fa-solid fa-bars"></i>
+                </button>
                 <img 
                   src="./logo.jpg" 
                   onClick={handleLogoClick}
-                  className="w-12 h-12 rounded-full border-2 border-blue-400 object-cover lightning-glow cursor-pointer shrink-0" 
+                  className="w-10 h-10 rounded-full border-2 border-blue-400 object-cover lightning-glow cursor-pointer shrink-0" 
                   alt="Logo"
                   onError={(e) => { e.target.style.display='none'; }}
                 />
@@ -697,13 +720,9 @@
                   </h1>
                 </div>
               </div>
-              <button 
-                onClick={() => setMenuOpen(true)} 
-                aria-label="פתח תפריט"
-                className="text-blue-200 hover:text-white p-2 -ml-2 shrink-0 active:scale-90 transition"
-              >
-                <i className="fa-solid fa-bars text-2xl"></i>
-              </button>
+              {!user?.isAnonymous && user && (
+                <button onClick={handleLogout} className="text-blue-300 p-2 hover:text-white transition shrink-0"><i className="fa-solid fa-right-from-bracket text-xl"></i></button>
+              )}
             </div>
           </header>
 
@@ -723,21 +742,47 @@
                     </div>
                   ) : (
                     <div>
-                      <div className="flex justify-between items-center">
-                        <h2 className="font-bold text-white text-lg">אהלן, {user.displayName}</h2>
-                        <button onClick={() => setShowCheckInForm(!showCheckInForm)} className="bg-blue-600 px-4 py-2 rounded-xl text-sm font-bold">Hit the Lights (אני פה)</button>
+                      <div className="flex justify-between items-center mb-4 border-b border-blue-900/50 pb-4">
+                        <div>
+                          <h2 className="font-bold text-white text-lg">אהלן, {user.displayName}</h2>
+                          {myCheckin ? (
+                            <p className="text-xs text-green-400 mt-1"><i className="fa-solid fa-check-circle mr-1"></i> כרטיס נוכחי: {myCheckin.zone}</p>
+                          ) : (
+                            <p className="text-xs text-gray-400 mt-1">טרם הזנת את הכרטיס שלך</p>
+                          )}
+                        </div>
+                        <button onClick={() => {
+                          if (!showCheckInForm && myCheckin) {
+                            setSelectedZone(myCheckin.zone);
+                            setStatusMessage(myCheckin.message || '');
+                          }
+                          setShowCheckInForm(!showCheckInForm);
+                        }} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-900/30 transition active:scale-95">
+                          {myCheckin ? 'עדכן כרטיס' : 'סמן כרטיס (אני פה)'}
+                        </button>
                       </div>
+                      
                       {showCheckInForm && (
-                        <div className="space-y-4 bg-blue-950/30 p-4 rounded-xl border border-blue-800/50 mt-4">
-                          <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none">
-                            {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
-                          </select>
-                          <input type="text" placeholder="Famous Last Words... (הודעה לחברים)" value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none" />
-                          <div className="flex gap-2">
-                              <button onClick={handleCheckIn} disabled={isSaving} className="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white transition active:scale-95">Seek & Deploy (שמור מיקום)</button>
-                              <button onClick={handleDeleteLocation} disabled={isSaving} className="bg-red-900/80 hover:bg-red-700 text-white px-4 py-3 rounded-xl font-bold transition active:scale-95">
-                                  <i className="fa-solid fa-trash-can text-lg"></i>
+                        <div className="space-y-4 bg-blue-950/30 p-4 rounded-xl border border-blue-800/50 mt-4 animate-in fade-in zoom-in-95 duration-200">
+                          <div>
+                            <label className="text-xs text-blue-300 block mb-1">סוג הכרטיס שרכשת / האזור שלך:</label>
+                            <select value={selectedZone} onChange={e => setSelectedZone(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition">
+                              {STADIUM_ZONES.map(z => <option key={z} value={z}>{z}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-blue-300 block mb-1">הודעה לחברים (אופציונלי):</label>
+                            <input type="text" placeholder="Famous Last Words..." value={statusMessage} onChange={e => setStatusMessage(e.target.value)} className="w-full bg-black/50 border border-blue-800 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition" />
+                          </div>
+                          <div className="flex gap-2 pt-2">
+                              <button onClick={handleCheckIn} disabled={isSaving} className="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold text-white transition active:scale-95 shadow-md">
+                                {myCheckin ? 'שמור שינויים' : 'Seek & Deploy (שמור)'}
                               </button>
+                              {myCheckin && (
+                                <button onClick={handleDeleteLocation} disabled={isSaving} className="bg-red-900/60 hover:bg-red-800 text-white px-4 py-3 rounded-xl font-bold transition active:scale-95">
+                                    <i className="fa-solid fa-trash-can text-lg"></i>
+                                </button>
+                              )}
                           </div>
                         </div>
                       )}
@@ -774,7 +819,25 @@
                   </div>
                 </div>
 
-                {/* --- אזור חדש: גלריית תמונות משותפת --- */}
+                {/* --- אזור: פריטים אסורים באצטדיון --- */}
+                <div className="bg-red-950/30 border border-red-800/40 rounded-2xl p-5 shadow-lg">
+                  <h3 className="font-bold text-red-400 mb-3 flex items-center gap-2">
+                    <i className="fa-solid fa-triangle-exclamation text-xl"></i>
+                    חשוב: פריטים אסורים באצטדיון
+                  </h3>
+                  <p className="text-xs text-gray-300 mb-3 leading-relaxed">
+                    הפקת המופע אוסרת על הכנסת הפריטים הבאים לאזור האירוע. הימנעו מאי נעימות בכניסה לאצטדיון:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {FORBIDDEN_ITEMS.map(item => (
+                      <span key={item} className="bg-red-900/40 border border-red-800/50 text-red-200 text-[11px] px-2 py-1 rounded-md">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* --- אזור: גלריית תמונות משותפת --- */}
                 <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/40 border border-blue-700/50 rounded-2xl p-5 shadow-lg">
                   <h3 className="font-bold text-white mb-2 flex items-center gap-2">
                     <i className="fa-solid fa-camera-retro text-blue-400 text-xl"></i>
@@ -836,7 +899,7 @@
                 ))}
               </div>
             )}
-
+            
             {activeTab === 'takeover' && (
               <div className="space-y-4 animate-in fade-in">
                  <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-2xl p-6 mb-6">
@@ -1459,16 +1522,7 @@
 
             {/* Drawer Menu Items */}
             <nav className="flex-1 overflow-y-auto py-3">
-              {[
-                { id: 'friends', icon: 'fa-street-view', label: 'רדאר חברים', color: 'text-blue-400' },
-                { id: 'takeover', icon: 'fa-meteor', label: 'Metallica Takeover', color: 'text-yellow-400' },
-                { id: 'game', icon: 'fa-clipboard-list', label: 'משחק הניחושים', color: 'text-purple-400', highlight: true },
-                { id: 'tickets', icon: 'fa-ticket', label: 'לוח כרטיסים', color: 'text-blue-400' },
-                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות ומיקומים', color: 'text-green-400' },
-                { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה ואינטרנט', color: 'text-red-400' },
-                { id: 'currency', icon: 'fa-money-bill-transfer', label: 'מחשבון המרה', color: 'text-green-400' },
-                { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים והמלצות', color: 'text-orange-400' }
-              ].map(tab => {
+              {MENU_TABS.map(tab => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button 
