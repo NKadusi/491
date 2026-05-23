@@ -73,9 +73,11 @@
       }
     }
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // 1. הוספנו את השורה הזו כדי לייבא את האנליטיקס:
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
@@ -85,6 +87,15 @@
       messagingSenderId: "488923007392",
       appId: "1:488923007392:web:8b657382aab11109a2bcc5",
       measurementId: "G-4QXV4Q37KH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    // 2. הוספנו את השורה הזו כדי להפעיל את המעקב בפועל:
+    const analytics = getAnalytics(app);
+    const databaseAppId = 'metallica-budapest-app';
+
     };
 
     const app = initializeApp(firebaseConfig);
