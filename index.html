@@ -95,8 +95,8 @@
 
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
 
-    const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-    const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=$${lat},${lng}`;
+    const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(query)}`;
 
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
@@ -117,8 +117,6 @@
       "בדרך לאצטדיון"
     ];
 
-    // Map old/deprecated zone names → new canonical names.
-    // (Snake Pit is a valid zone — not migrated.)
     const ZONE_MIGRATIONS = {
       "Snake Pit": "Snake Pit 🐍",
       "דשא צמוד לבמה": "פרנטיק (Frantic Early Entry)",
@@ -152,6 +150,7 @@
 
     const TAKEOVER_EVENTS = [
       { id: 'popup', name: 'חנות פופ-אפ מטאליקה', type: 'store', lat: 47.4760, lng: 19.0461, desc: "Allee Shopping Mall (G018 - קומת קרקע)\n10-13 ביוני | 08:30 - 20:00\n14 ביוני | 08:30 - 18:00", icon: 'fa-solid fa-bag-shopping', color: 'text-yellow-400' },
+      { id: 'warmup', name: 'מסיבת חימום קדם-הופעה', type: 'party', lat: 47.4957, lng: 19.0608, desc: "BarHole Music\n10 ביוני, החל מ-17:00\nמסיבת חימום של שבוע מטאליקה! מפגש מעריצים, חידון נושא פרסים (ב-20:00), תצוגת הגיטרות המיוחדת של קליף ברטון והגרלת צדקה. הכניסה חופשית!", icon: 'fa-solid fa-beer-mug-empty', color: 'text-orange-400', customCalLink: 'https://calendar.app.google/pi21H8TZDZsZVRhu6' },
       { id: 'blood', name: 'תרומת דם - הצלב האדום', type: 'charity', lat: 47.5028, lng: 19.1039, desc: "Budapest Aréna\n11 ביוני: 09:00-17:00\n12 ביוני: 09:00-19:00", icon: 'fa-solid fa-hand-holding-droplet', color: 'text-red-500' },
       { id: 'film', name: 'פסטיבל סרטי מטאליקה', type: 'movie', lat: 47.4990, lng: 19.0967, desc: "Cinema City Aréna\n12 ביוני, 14:00\nCliff 'Em All / Cunning Stunts ועוד", icon: 'fa-solid fa-film', color: 'text-gray-300' },
       { id: 'tribute', name: '...And Tributes for All!', type: 'concert', lat: 47.4526, lng: 19.0594, desc: "Barba Negra\n12 ביוני, 14:00-22:00\nמופעי מחווה למטאליקה, פנטרה וגוז'ירה", icon: 'fa-solid fa-bolt', color: 'text-blue-400' },
@@ -218,7 +217,7 @@
     const FORBIDDEN_ITEMS = [
       "אוכל", "משקאות", "סמים", "מטריות", "תיקים גדולים", 
       "מצלמות אקסטרים", "רחפנים", "מוטות סלפי", "ציוד הקלטה (אודיו/וידאו)", 
-      "כלי נשק", "מצביעי לייזר", "מצלמות מקצועיות", "קטנועים"
+      "כלי נשק", "מצביעי לייזר", "אופניים", "קטנועים"
     ];
 
     const MENU_TABS = [
@@ -249,6 +248,30 @@
       }
       return cleaned;
     }
+
+    // יצירת קישור הוספה ליומן גוגל (אנדרואיד/ווב)
+    const getGoogleCalUrl = (event) => {
+      if (event.customCalLink) return event.customCalLink;
+      const text = encodeURIComponent(event.name);
+      const details = encodeURIComponent(event.desc);
+      const loc = encodeURIComponent(`${event.lat},${event.lng}`);
+      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&details=${details}&location=${loc}`;
+    };
+
+    // יצירת קובץ ICS להוספה ליומן אפל (אייפון)
+    const getAppleCalUrl = (event) => {
+      const ics = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "BEGIN:VEVENT",
+        `SUMMARY:${event.name}`,
+        `DESCRIPTION:${event.desc.replace(/\n/g, ' ')}`,
+        `LOCATION:${event.lat},${event.lng}`,
+        "END:VEVENT",
+        "END:VCALENDAR"
+      ].join("\n");
+      return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;
+    };
 
     function App() {
       const initialTab = new URLSearchParams(window.location.search).get('tab') || 'friends';
@@ -365,7 +388,6 @@
         });
       }, [user]);
 
-      // Auto-migrate the current user's own check-in if it sits on a deprecated zone.
       useEffect(() => {
         if (!user || !checkins.length) return;
         const own = checkins.find(c => c.id === user.uid);
@@ -454,7 +476,6 @@
         }).sort((a, b) => b.score - a.score || b.exactMatches - a.exactMatches);
       }, [officialSetlist, allPredictions]);
 
-      // מוצא את הצ'ק-אין של המשתמש המחובר אם קיים
       const myCheckin = useMemo(() => {
         if (!user) return null;
         return checkins.find(c => c.id === user.uid) || null;
@@ -705,7 +726,7 @@
             </div>
           )}
 
-          {/* --- תפריט צד (המבורגר) בסגנון גוגל --- */}
+          {/* --- תפריט צד (המבורגר) --- */}
           <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMenuOpen(false)}></div>
             <div className={`absolute inset-y-0 right-0 w-72 bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
@@ -989,15 +1010,27 @@
                 </div>
 
                 {TAKEOVER_EVENTS.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-5 flex gap-4 items-center shadow-lg relative overflow-hidden">
+                  <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-4 shadow-lg relative overflow-hidden flex flex-col gap-3">
                     <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
-                    <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
+                    
+                    <div className="flex gap-4 items-center pl-2">
+                      <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-white text-lg">{p.name}</h3>
+                        <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
+                      </div>
+                      <div className="flex gap-2">
+                          <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0 shadow-md active:scale-90"><i className="fa-solid fa-location-arrow"></i></button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
+
+                    <div className="flex gap-2 mr-2 border-t border-gray-800 pt-3">
+                      <a href={getGoogleCalUrl(p)} target="_blank" rel="noreferrer" className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
+                        <i className="fa-brands fa-google text-blue-400"></i> Android
+                      </a>
+                      <a href={getAppleCalUrl(p)} download={`${p.id}.ics`} className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
+                        <i className="fa-brands fa-apple text-gray-200"></i> iPhone
+                      </a>
                     </div>
                   </div>
                 ))}
