@@ -280,6 +280,7 @@
       const [menuOpen, setMenuOpen] = useState(false);
       const [user, setUser] = useState(null);
       const [checkins, setCheckins] = useState([]);
+      const [takeoverRsvps, setTakeoverRsvps] = useState([]); // ניהול אישורי הגעה לאירועי Takeover
       const [selectedZone, setSelectedZone] = useState(STADIUM_ZONES[0]);
       const [statusMessage, setStatusMessage] = useState('');
       const [isSaving, setIsSaving] = useState(false);
@@ -379,6 +380,7 @@
         return () => clearInterval(timer);
       }, []);
 
+      // שליפת מיקומי אצטדיון
       useEffect(() => {
         if (!user) return;
         const checkinsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'stadium_checkins');
@@ -387,6 +389,15 @@
           setCheckins(data.sort((a, b) => b.timestamp - a.timestamp));
         });
       }, [user]);
+
+      // משיכת אישורי הגעה לאירועי Takeover
+      useEffect(() => {
+        const rsvpsRef = collection(db, 'artifacts', databaseAppId, 'public', 'data', 'takeover_rsvps');
+        return onSnapshot(rsvpsRef, (snapshot) => {
+          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setTakeoverRsvps(data);
+        });
+      }, []);
 
       useEffect(() => {
         if (!user || !checkins.length) return;
@@ -526,6 +537,38 @@
           console.error(e);
           alert("שגיאת הרשאות! ודא שעדכנת את ה-Firebase Rules עם כתובת האימייל שלך.");
         }
+        setIsSaving(false);
+      };
+
+      // פונקציית אישורי הגעה לאירועי Takeover (RSVP)
+      const handleToggleRsvp = async (eventId) => {
+        if (!user || user.isAnonymous) {
+          alert("יש להתחבר כדי לסמן הגעה.");
+          return;
+        }
+        
+        const docId = `${eventId}_${user.uid}`;
+        const docRef = doc(db, 'artifacts', databaseAppId, 'public', 'data', 'takeover_rsvps', docId);
+        
+        const isGoing = takeoverRsvps.some(r => r.id === docId);
+        setIsSaving(true);
+        
+        try {
+          if (isGoing) {
+            await deleteDoc(docRef);
+          } else {
+            await setDoc(docRef, {
+              eventId,
+              userId: user.uid,
+              name: user.displayName || "אורח",
+              timestamp: Date.now()
+            });
+          }
+        } catch (e) {
+          console.error(e);
+          alert("שגיאה בשמירת האישור. אנא נסה שוב.");
+        }
+        
         setIsSaving(false);
       };
 
@@ -1009,31 +1052,65 @@
                   <p className="text-sm text-gray-300">ריכוז האירועים הרשמיים סביב ההופעות (מעודכן לפי פרסומי הלהקה).</p>
                 </div>
 
-                {TAKEOVER_EVENTS.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-4 shadow-lg relative overflow-hidden flex flex-col gap-3">
-                    <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
-                    
-                    <div className="flex gap-4 items-center pl-2">
-                      <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                        <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
+                {TAKEOVER_EVENTS.map(p => {
+                  const eventRsvps = takeoverRsvps.filter(r => r.eventId === p.id);
+                  const amIGoing = user && !user.isAnonymous && eventRsvps.some(r => r.userId === user.uid);
+                  
+                  return (
+                    <div key={p.id} className="bg-black/60 border border-yellow-900/60 rounded-2xl p-4 shadow-lg relative overflow-hidden flex flex-col gap-3">
+                      <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
+                      
+                      <div className="flex gap-4 items-center pl-2">
+                        <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white text-lg">{p.name}</h3>
+                          <p className="text-xs text-gray-400 whitespace-pre-line leading-relaxed">{p.desc}</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0 shadow-md active:scale-90"><i className="fa-solid fa-location-arrow"></i></button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                          <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-yellow-600 hover:bg-yellow-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0 shadow-md active:scale-90"><i className="fa-solid fa-location-arrow"></i></button>
-                      </div>
-                    </div>
 
-                    <div className="flex gap-2 mr-2 border-t border-gray-800 pt-3">
-                      <a href={getGoogleCalUrl(p)} target="_blank" rel="noreferrer" className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
-                        <i className="fa-brands fa-google text-blue-400"></i> Android
-                      </a>
-                      <a href={getAppleCalUrl(p)} download={`${p.id}.ics`} className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
-                        <i className="fa-brands fa-apple text-gray-200"></i> iPhone
-                      </a>
+                      {/* --- RSVP Section --- */}
+                      <div className="flex justify-between items-start mr-2 ml-2 bg-gray-900/40 p-2 rounded-xl border border-gray-800/50 mt-1">
+                        <div className="text-xs flex-1 pr-1">
+                           {eventRsvps.length > 0 ? (
+                             <div className="flex flex-col gap-0.5">
+                               <span className="text-blue-300 font-bold"><i className="fa-solid fa-users ml-1"></i> {eventRsvps.length} חברים מגיעים:</span>
+                               <span className="text-gray-400 text-[10px] leading-tight mt-0.5">
+                                 {eventRsvps.map(r => r.name).join(', ')}
+                               </span>
+                             </div>
+                           ) : (
+                             <span className="text-gray-500 flex items-center h-full pt-1.5">תהיו הראשונים לאשר!</span>
+                           )}
+                        </div>
+                        <div className="shrink-0 pl-1">
+                          {(!user || user.isAnonymous) ? (
+                            <button onClick={handleGoogleLogin} className="text-[10px] text-gray-400 underline mt-1.5">התחבר כדי לאשר</button>
+                          ) : (
+                            <button 
+                              onClick={() => handleToggleRsvp(p.id)}
+                              disabled={isSaving}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 active:scale-95 mt-0.5 ${amIGoing ? 'bg-green-900/40 text-green-400 border border-green-500/50' : 'bg-gray-800 text-white border border-gray-600 hover:bg-gray-700'}`}
+                            >
+                              {amIGoing ? <><i className="fa-solid fa-check"></i> מגיע/ה!</> : <><i className="fa-solid fa-plus"></i> סימון הגעה</>}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mr-2 border-t border-gray-800 pt-3">
+                        <a href={getGoogleCalUrl(p)} target="_blank" rel="noreferrer" className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
+                          <i className="fa-brands fa-google text-blue-400"></i> Android
+                        </a>
+                        <a href={getAppleCalUrl(p)} download={`${p.id}.ics`} className="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 py-2 rounded-lg text-[11px] font-bold flex justify-center items-center gap-1.5 transition border border-gray-700 active:scale-95">
+                          <i className="fa-brands fa-apple text-gray-200"></i> iPhone
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
