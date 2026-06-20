@@ -32,7 +32,7 @@
       background-position: center;
     }
     .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px) !important; }
-    .lightning-glow { filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.9)); }
+    .lightning-glow { filter: drop-shadow(0 0 10px rgba(59, 130, 2ש46, 0.9)); }
     /* Hide scrollbar for clean UI but allow scrolling */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -48,7 +48,7 @@
 
   <div id="root"></div>
 
-  <script type="text/babel" data-type="module">
+  <script type="text/babel" data-type="module" data-presets="react">
     const { useState, useEffect, useMemo, Component } = React;
 
     class ErrorBoundary extends Component {
@@ -95,8 +95,8 @@
 
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
 
-    const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=$${lat},${lng}`;
-    const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(query)}`;
+   const getMapUrl = (lat, lng) => `https://maps.google.com/?q=${lat},${lng}`;
+     const getMapSearchUrl = (query) => `https://maps.google.com/?q=${encodeURIComponent(query)}`;
 
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
@@ -110,7 +110,7 @@
       "פלטפורמה",
       "פרנטיק (Frantic Early Entry)",
       "דשא עמידה (GA)",
-      "יציע 100 (Seek & Destroy)",
+      "יציע 100",
       "יציע 200",
       "יציע 300",
       "מתחם אוכל",
