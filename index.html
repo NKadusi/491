@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chapter 491 Goes to Budapest</title>
 
+  <!-- PWA & Mobile Web App Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Metallica HU">
@@ -49,10 +50,9 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
     const { useState, useEffect, useMemo, Component } = React;
 
@@ -87,16 +87,15 @@
       measurementId: "G-4QXV4Q37KH"
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const analytics = getAnalytics(app);
     const databaseAppId = 'metallica-budapest-app';
 
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
 
-    const getMapUrl = (lat, lng) => `http://maps.google.com/?q=${lat},${lng}`;
-    const getMapSearchUrl = (query) => `http://maps.google.com/?q=${encodeURIComponent(query)}`;
+    const getMapUrl = (lat, lng) => `https://maps.google.com/?q=${lat},${lng}`;
+    const getMapSearchUrl = (query) => `https://maps.google.com/?q=${encodeURIComponent(query)}`;
 
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
@@ -568,7 +567,7 @@
           }
         } catch (e) {
           console.error(e);
-          alert("שגיאה בשמירת האישור. אנא נסה שוב.");
+          alert("שגיאה בשמירת האישור:\n" + e.message);
         }
         
         setIsSaving(false);
@@ -1962,5 +1961,29 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<ErrorBoundary><App /></ErrorBoundary>);
   </script>
+
+  <!-- הפעלה בטוחה של גוגל אנליטיקס בסקריפט נפרד כדי שחוסמי פרסומות לא יקריסו את כל האתר -->
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
+      authDomain: "goes-to-budapest.firebaseapp.com",
+      projectId: "goes-to-budapest",
+      storageBucket: "goes-to-budapest.firebasestorage.app",
+      messagingSenderId: "488923007392",
+      appId: "1:488923007392:web:8b657382aab11109a2bcc5",
+      measurementId: "G-4QXV4Q37KH"
+    };
+
+    try {
+      const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+      getAnalytics(app);
+    } catch(e) {
+      console.warn("Analytics blocked by browser");
+    }
+  </script>
+
 </body>
 </html>
