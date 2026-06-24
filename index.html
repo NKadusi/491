@@ -50,9 +50,10 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // הסרנו מכאן את יבוא האנליטיקס, הוא נטען למטה בצורה בטוחה!
 
     const { useState, useEffect, useMemo, Component } = React;
 
@@ -87,15 +88,24 @@
       measurementId: "G-4QXV4Q37KH"
     };
 
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const databaseAppId = 'metallica-budapest-app';
 
+    // טעינה חכמה ודינמית של גוגל אנליטיקס - מונע קריסה של האתר מחוסמי פרסומות
+    import("https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js")
+      .then((module) => {
+        module.getAnalytics(app);
+      })
+      .catch(() => {
+        console.warn("Google Analytics blocked by browser/ad-blocker. App running normally.");
+      });
+
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
 
-    const getMapUrl = (lat, lng) => `https://maps.google.com/?q=${lat},${lng}`;
-    const getMapSearchUrl = (query) => `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+    const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
@@ -567,7 +577,7 @@
           }
         } catch (e) {
           console.error(e);
-          alert("שגיאה בשמירת האישור:\n" + e.message);
+          alert("שגיאה בשמירת האישור. אנא נסה שוב.");
         }
         
         setIsSaving(false);
@@ -975,8 +985,8 @@
                     הפקת המופע אוסרת על הכנסת הפריטים הבאים לאזור האירוע. הימנעו מאי נעימות בכניסה לאצטדיון:
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {FORBIDDEN_ITEMS.map(item => (
-                      <span key={item} className="bg-red-900/40 border border-red-800/50 text-red-200 text-[11px] px-2 py-1 rounded-md">
+                    {FORBIDDEN_ITEMS.map((item, i) => (
+                      <span key={i} className="bg-red-900/40 border border-red-800/50 text-red-200 text-[11px] px-2 py-1 rounded-md">
                         {item}
                       </span>
                     ))}
