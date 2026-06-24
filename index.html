@@ -49,6 +49,11 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
     const { useState, useEffect, useMemo, Component } = React;
 
     class ErrorBoundary extends Component {
@@ -72,11 +77,6 @@
       }
     }
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyC7EreIS4PMeQtPEsQu35y2_UlcNl3c8VI",
       authDomain: "goes-to-budapest.firebaseapp.com",
@@ -95,8 +95,8 @@
 
     const isWhatsAppOrInApp = /WhatsApp|FBAV|FBAN|Instagram|Line/i.test(navigator.userAgent);
 
-    const getMapUrl = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=$${lat},${lng}`;
-    const getMapSearchUrl = (query) => `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(query)}`;
+    const getMapUrl = (lat, lng) => `http://maps.google.com/?q=${lat},${lng}`;
+    const getMapSearchUrl = (query) => `http://maps.google.com/?q=${encodeURIComponent(query)}`;
 
     const boltIOS = `https://apps.apple.com/app/id675033630`;
     const boltAndroid = `https://play.google.com/store/apps/details?id=ee.mtakso.client`;
@@ -110,7 +110,7 @@
       "פלטפורמה",
       "פרנטיק (Frantic Early Entry)",
       "דשא עמידה (GA)",
-      "יציע 100 (Seek & Destroy)",
+      "יציע 100",
       "יציע 200",
       "יציע 300",
       "מתחם אוכל",
@@ -215,9 +215,11 @@
     ];
 
     const FORBIDDEN_ITEMS = [
-      "אוכל", "משקאות", "סמים", "מטריות", "תיקים גדולים", 
-      "מצלמות אקסטרים", "רחפנים", "מוטות סלפי", "ציוד הקלטה (אודיו/וידאו)", 
-      "כלי נשק", "מצביעי לייזר", "אופניים", "קטנועים"
+      "אוכל ושתייה", "סמים", "מטריות (קחו פונצ׳ו)", "תיקים מעל A4 (20×30 ס\"מ)",
+      "בקבוקי זכוכית", "מצלמות אקסטרים", "רחפנים", "מוטות סלפי",
+      "מוטות דגלים", "מצלמות מקצועיות (עדשות נשלפות)", "ציוד הקלטת אודיו/וידאו",
+      "כלי נשק", "חפצים שניתן להשליך", "מצביעי לייזר",
+      "אופניים", "קטנועים", "רולר / סקייטבורד"
     ];
 
     const MENU_TABS = [
@@ -225,7 +227,7 @@
       { id: 'takeover', icon: 'fa-meteor', label: 'Metallica Takeover' },
       { id: 'game', icon: 'fa-clipboard-list', label: 'תחרות הסטליסט', highlight: true },
       { id: 'tickets', icon: 'fa-ticket', label: 'לוח כרטיסים אירופי' },
-      { id: 'map', icon: 'fa-map-location-dot', label: 'מפות ומיקומים' },
+      { id: 'map', icon: 'fa-circle-info', label: 'פרטי ההופעה' },
       { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה ותקשורת' },
       { id: 'currency', icon: 'fa-money-bill-transfer', label: 'מחשבון המרה פנימי' },
       { id: 'bars', icon: 'fa-beer-mug-empty', label: 'מדריך בילויים' }
@@ -1024,24 +1026,195 @@
             )}
 
             {activeTab === 'map' && (
-              <div className="space-y-4 animate-in fade-in">
-                {PLACES.map(p => (
-                  <div key={p.id} className="bg-black/60 border border-gray-800 rounded-2xl p-5 flex gap-4 items-center shadow-lg">
-                    <div className={`w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-xl shrink-0 ${p.color}`}><i className={p.icon}></i></div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white text-lg">{p.name}</h3>
-                      <p className="text-xs text-gray-400 whitespace-pre-line">{p.desc}</p>
+              <div className="space-y-4 animate-in fade-in pb-4">
+
+                {/* כותרת ראשית */}
+                <div className="bg-gradient-to-br from-red-900/40 via-black/60 to-yellow-900/30 border border-yellow-500/40 rounded-2xl p-5 relative overflow-hidden shadow-lg">
+                  <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
+                  <h2 className="text-xl font-black text-white mb-1 flex items-center gap-2">
+                    <i className="fa-solid fa-bolt text-yellow-400"></i>
+                    פרטי ההופעה
+                  </h2>
+                  <p className="text-sm text-gray-300">Puskás Aréna · בודפשט</p>
+                  <p className="text-xs text-gray-400 mt-1" dir="ltr">1146 Budapest, Istvánmezei út 3-5.</p>
+                </div>
+
+                {/* שני ימי ההופעה */}
+                <div className="grid gap-3">
+                  <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-gray-800/60 pb-2 mb-3">
+                      <h3 className="font-bold text-white text-base flex items-center gap-2">
+                        <i className="fa-solid fa-calendar-day text-yellow-400"></i>
+                        יום ה׳ · 11 ביוני 2026
+                      </h3>
+                      <span className="text-[10px] uppercase tracking-wider text-yellow-400 font-bold">Day 1</span>
                     </div>
-                    <div className="flex gap-2">
-                        {p.hasTickets && (
-                            <button onClick={() => window.open(blsTickets, '_blank')} className="bg-orange-600 hover:bg-orange-500 text-white px-3 rounded-xl flex items-center justify-center font-bold text-xs transition shrink-0">
-                                <i className="fa-solid fa-ticket ml-1"></i> כרטיסים
-                            </button>
-                        )}
-                        <button onClick={() => window.open(getMapUrl(p.lat, p.lng), '_blank')} className="bg-blue-600 hover:bg-blue-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition shrink-0"><i className="fa-solid fa-location-arrow"></i></button>
+                    <ul className="text-sm space-y-1.5">
+                      <li className="flex justify-between"><span className="text-gray-400">פתיחת שערים</span><span className="font-mono text-gray-200" dir="ltr">16:00</span></li>
+                      <li className="flex justify-between"><span className="text-gray-300">Avatar</span><span className="font-mono text-gray-200" dir="ltr">17:30</span></li>
+                      <li className="flex justify-between"><span className="text-gray-300">Pantera</span><span className="font-mono text-gray-200" dir="ltr">18:30</span></li>
+                      <li className="flex justify-between border-t border-gray-800/50 pt-1.5 mt-1.5"><span className="text-yellow-400 font-bold">Metallica</span><span className="font-mono text-yellow-300 font-bold" dir="ltr">20:00</span></li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                    <div className="flex items-center justify-between border-b border-gray-800/60 pb-2 mb-3">
+                      <h3 className="font-bold text-white text-base flex items-center gap-2">
+                        <i className="fa-solid fa-calendar-day text-yellow-400"></i>
+                        שבת · 13 ביוני 2026
+                      </h3>
+                      <span className="text-[10px] uppercase tracking-wider text-yellow-400 font-bold">Day 2</span>
+                    </div>
+                    <ul className="text-sm space-y-1.5">
+                      <li className="flex justify-between"><span className="text-gray-400">פתיחת שערים</span><span className="font-mono text-gray-200" dir="ltr">16:00</span></li>
+                      <li className="flex justify-between"><span className="text-gray-300">Knocked Loose</span><span className="font-mono text-gray-200" dir="ltr">17:30</span></li>
+                      <li className="flex justify-between"><span className="text-gray-300">Gojira</span><span className="font-mono text-gray-200" dir="ltr">18:30</span></li>
+                      <li className="flex justify-between border-t border-gray-800/50 pt-1.5 mt-1.5"><span className="text-yellow-400 font-bold">Metallica</span><span className="font-mono text-yellow-300 font-bold" dir="ltr">20:00</span></li>
+                    </ul>
+                    <p className="text-[10px] text-gray-500 mt-2 italic">* הזמנים עשויים להשתנות</p>
+                  </div>
+                </div>
+
+                {/* כרטיסים */}
+                <div className="bg-black/60 border border-blue-900/60 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-blue-300 text-base flex items-center gap-2 mb-3 border-b border-blue-900/40 pb-2">
+                    <i className="fa-solid fa-ticket"></i>
+                    כרטיסים
+                  </h3>
+                  <ul className="text-sm text-gray-300 space-y-2">
+                    <li className="flex gap-2"><i className="fa-solid fa-circle-check text-green-500 mt-1 text-[10px] shrink-0"></i><span>כרטיס דו-יומי <b className="text-white">לא ניתן לפצל</b> – נדרש סריקה בשני הימים</span></li>
+                    <li className="flex gap-2"><i className="fa-solid fa-circle-check text-green-500 mt-1 text-[10px] shrink-0"></i><span>אין צורך להדפיס – ה-QR מהטלפון מספיק</span></li>
+                    <li className="flex gap-2"><i className="fa-solid fa-triangle-exclamation text-yellow-500 mt-1 text-[10px] shrink-0"></i><span>כניסה אחת בלבד ביום – <b className="text-white">אין כניסה חוזרת</b> אחרי יציאה</span></li>
+                  </ul>
+                  <button onClick={() => window.open('https://funcode.hu/', '_blank')} className="mt-3 w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg flex justify-center items-center gap-2 text-sm font-bold transition active:scale-95">
+                    <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                    איתור הכרטיס בחשבון Funcode
+                  </button>
+                </div>
+
+                {/* שערים וכניסות */}
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-white text-base flex items-center gap-2 mb-3 border-b border-gray-800/60 pb-2">
+                    <i className="fa-solid fa-door-open text-orange-400"></i>
+                    שערים וכניסות
+                  </h3>
+                  <div className="space-y-2 text-xs">
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-gray-400 mb-0.5">GA Standing (עמידה / דשא)</div>
+                      <div className="text-white text-sm leading-relaxed">שער <b className="text-yellow-400" dir="ltr">III</b> או <b className="text-yellow-400" dir="ltr">VI</b> → כניסה <b className="text-yellow-400">D</b><br/>או שער <b className="text-yellow-400" dir="ltr">XIII</b> → כניסה <b className="text-yellow-400">B</b></div>
+                      <div className="text-[10px] text-gray-500 mt-1">הצמידים מחולקים רק בכניסה</div>
+                    </div>
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-gray-400 mb-0.5">מקום ישיבה (Seated)</div>
+                      <div className="text-white text-sm">השער והכניסה מודפסים על הכרטיס</div>
+                    </div>
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-gray-400 mb-0.5">Metallica VIP</div>
+                      <div className="text-white text-sm">שער <b className="text-yellow-400" dir="ltr">XV</b> → כניסה <b className="text-yellow-400">C</b> בלבד</div>
+                    </div>
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="text-gray-400 mb-0.5">Puskás VIP</div>
+                      <div className="text-white text-sm">השער והכניסה מודפסים על הכרטיס</div>
+                    </div>
+                    <div className="bg-blue-900/20 p-2.5 rounded-lg border border-blue-700/50">
+                      <div className="text-blue-300 mb-0.5"><i className="fa-solid fa-wheelchair text-xs"></i> כניסה נגישה</div>
+                      <div className="text-white text-sm">כניסה <b className="text-blue-300">E</b> בלבד · יש מעלית נגישה ליציעים</div>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* מפת האצטדיון */}
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-3 shadow-lg">
+                  <h3 className="font-bold text-white text-base flex items-center gap-2 mb-2 px-1">
+                    <i className="fa-solid fa-map text-green-400"></i>
+                    מפת האצטדיון
+                  </h3>
+                  <img src="./stadium-map.jpg" alt="Puskás Aréna map" className="w-full rounded-lg border border-gray-800 cursor-pointer active:scale-[0.99] transition" onClick={(e) => window.open(e.target.src, '_blank')} />
+                  <p className="text-[10px] text-gray-500 mt-1.5 text-center">לחץ להגדלה במסך מלא</p>
+                </div>
+
+                {/* עזרה במקום */}
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-white text-base flex items-center gap-2 mb-3 border-b border-gray-800/60 pb-2">
+                    <i className="fa-solid fa-circle-question text-red-400"></i>
+                    עזרה במקום
+                  </h3>
+                  <div className="text-sm text-gray-300 space-y-2.5">
+                    <p className="flex gap-2"><i className="fa-solid fa-shirt text-red-500 mt-1 text-xs shrink-0"></i><span>מתנדבים בחולצות אדומות זמינים לכל שאלה</span></p>
+                    <p className="flex gap-2"><i className="fa-solid fa-headset text-blue-400 mt-1 text-xs shrink-0"></i><span>בעיה עם כרטיס/מקום? <b className="text-white">Ticket Resolution</b> סמוך ליציעים <span dir="ltr" className="font-mono text-blue-300">101, 118, 210, 230, 308, 328</span></span></p>
+                    <p className="flex gap-2"><i className="fa-solid fa-cash-register text-green-400 mt-1 text-xs shrink-0"></i><span><b className="text-white">Box Office</b>: פתוח מ-<span dir="ltr" className="font-mono">14:00</span> ביום ההופעה, בשערים <span dir="ltr" className="font-bold">III</span> ו-<span dir="ltr" className="font-bold">IX</span></span></p>
+                  </div>
+                </div>
+
+                {/* אחסון תיקים / מלתחה / ReCup */}
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-white text-base flex items-center gap-2 mb-3 border-b border-gray-800/60 pb-2">
+                    <i className="fa-solid fa-suitcase text-purple-400"></i>
+                    אחסון, מלתחה ו-ReCup
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="flex justify-between items-center">
+                        <b className="text-white">אחסון תיקים</b>
+                        <span className="text-yellow-400 font-mono text-xs" dir="ltr">4,000 Ft</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">לפריט · שער I מ-<span dir="ltr">12:00</span> · שער IX מ-<span dir="ltr">15:00</span></p>
+                      <p className="text-[11px] text-yellow-400 mt-1">⚠ תיקים מעל <span dir="ltr">A4 (20×30 ס״מ)</span> אסורים בכניסה</p>
+                    </div>
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="flex justify-between items-center">
+                        <b className="text-white">מלתחה (Cloakroom)</b>
+                        <span className="text-yellow-400 font-mono text-xs" dir="ltr">1,500 Ft</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">לפריט · בתוך האצטדיון, ביציע <span dir="ltr">118</span></p>
+                    </div>
+                    <div className="bg-gray-900/50 p-2.5 rounded-lg border border-gray-800">
+                      <div className="flex justify-between items-center">
+                        <b className="text-white">ReCup (כוס משקה)</b>
+                        <span className="text-yellow-400 font-mono text-xs" dir="ltr">600 Ft</span>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">תשלום חד-פעמי · ניתן להחליף בכוס נקייה או באסימון למילוי חוזר</p>
+                      <p className="text-[11px] text-yellow-300 mt-1">🎸 גרסה ממותגת Metallica: <span dir="ltr" className="font-mono">1,800 Ft</span> (אינה ניתנת להחלפה באסימון)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* מרצ׳נדייז */}
+                <div className="bg-black/60 border border-yellow-900/60 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-yellow-300 text-base flex items-center gap-2 mb-2 border-b border-yellow-900/40 pb-2">
+                    <i className="fa-solid fa-shirt"></i>
+                    מרצ׳נדייז
+                  </h3>
+                  <p className="text-sm text-gray-300">דוכנים פתוחים <b className="text-white">מ-<span dir="ltr">16:00</span></b> בשער <b className="text-yellow-400" dir="ltr">XIII</b>, מול המוזיאון, וגם בתוך האצטדיון.</p>
+                </div>
+
+                {/* גילאים */}
+                <div className="bg-black/60 border border-gray-800 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-white text-base flex items-center gap-2 mb-3 border-b border-gray-800/60 pb-2">
+                    <i className="fa-solid fa-child-reaching text-pink-400"></i>
+                    מדיניות גיל
+                  </h3>
+                  <ul className="text-sm text-gray-300 space-y-1.5">
+                    <li>• כרטיס נדרש מגיל <b className="text-white">2</b> ומעלה</li>
+                    <li>• מתחת לגיל <b className="text-white">6</b> – אסור על הדשא (Floor)</li>
+                    <li>• מתחת לגיל <b className="text-white">16</b> – רק עם מבוגר מעל גיל <b className="text-white">18</b></li>
+                    <li>• המופע <b className="text-yellow-400">לא מומלץ מתחת לגיל 12</b></li>
+                  </ul>
+                </div>
+
+                {/* פריטים אסורים */}
+                <div className="bg-red-900/20 border border-red-800/50 rounded-2xl p-4 shadow-lg">
+                  <h3 className="font-bold text-red-300 text-base flex items-center gap-2 mb-3 border-b border-red-800/40 pb-2">
+                    <i className="fa-solid fa-ban"></i>
+                    אסור להכניס לאצטדיון
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {FORBIDDEN_ITEMS.map((item, i) => (
+                      <span key={i} className="text-[11px] bg-red-950/50 text-red-200 px-2.5 py-1 rounded-full border border-red-900/50">{item}</span>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
             
@@ -1718,7 +1891,7 @@
                 { id: 'takeover', icon: 'fa-meteor', label: 'Metallica Takeover', color: 'text-yellow-400' },
                 { id: 'game', icon: 'fa-clipboard-list', label: 'משחק הניחושים', color: 'text-purple-400', highlight: true },
                 { id: 'tickets', icon: 'fa-ticket', label: 'לוח כרטיסים', color: 'text-blue-400' },
-                { id: 'map', icon: 'fa-map-location-dot', label: 'מפות ומיקומים', color: 'text-green-400' },
+                { id: 'map', icon: 'fa-circle-info', label: 'פרטי ההופעה', color: 'text-yellow-400' },
                 { id: 'transport', icon: 'fa-train-subway', label: 'תחבורה ואינטרנט', color: 'text-red-400' },
                 { id: 'currency', icon: 'fa-money-bill-transfer', label: 'מחשבון המרה', color: 'text-green-400' },
                 { id: 'bars', icon: 'fa-beer-mug-empty', label: 'בילויים והמלצות', color: 'text-orange-400' }
